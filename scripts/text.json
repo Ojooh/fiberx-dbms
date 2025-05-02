@@ -22,14 +22,17 @@
             "models": [
                 {
                     "name": "Member",
+                    "app_id": "fibase",
                     "permissions": ["read", "create", "update", "delete", "create_schema", "make_migrations", "migrate"]
                 },
                 {
                     "name": "Role",
+                    "app_id": "fibase",
                     "permissions": ["read", "create", "update", "delete", "create_schema", "make_migrations", "migrate"]
                 },
                 {
                     "name": "Delete",
+                    "app_id": "fibase",
                     "permissions": ["read", "create", "update", "delete", "create_schema", "make_migrations", "migrate", "delete_schema"]
                 }
             ]

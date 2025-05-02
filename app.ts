@@ -3,12 +3,13 @@ import * as yaml from "js-yaml";
 
 import GitUtil from "@/utils/git_util";
 import FibaseAPIClient from "@/api/fibase_client";
+import ModelBuilderScript from "./scripts/model_builder_script";
 import SchemaBuilderScript from "@/scripts/schema_builder_script";
 import GlobalVariableManager from "@/utils/global_variable_manager";
 import MigrationManagerScript from "./scripts/migration_manager_script";
 import DatasourceRegistry from "@/datasource_connectors/datasource_registry";
 
-
+import { model_code_templates } from "@/scripts/code_templates";
 
 import { 
     EnvConfigInterface, 
@@ -25,6 +26,7 @@ class FiberXDBMS {
     private ENV:EnvConfigInterface;
     private api_client: FibaseAPIClient | null;
     private schema_builder: SchemaBuilderScript | null;
+    private model_builder: ModelBuilderScript | null;
     private migration_manager: MigrationManagerScript | null;
     private handshake_complete: boolean = false;
     private datasource_register: DatasourceRegistry;
@@ -35,6 +37,7 @@ class FiberXDBMS {
         this.global_vars        = GlobalVariableManager.getInstance()
         this.api_client         = null;
         this.schema_builder     = null;
+        this.model_builder      = null;
         this.migration_manager  = null;
         this.datasource_register= DatasourceRegistry.instance;
         this.git_util           = new GitUtil(this.ENV.REPOSITORY_BRANCH.toString());
@@ -101,6 +104,7 @@ class FiberXDBMS {
 
             this.schema_builder     = new SchemaBuilderScript();
             this.migration_manager  = new MigrationManagerScript();
+            this.model_builder      = new ModelBuilderScript();
 
         } catch (error) {
             console.error("[FiberXDBMS] Initialization failed:", error);
@@ -200,6 +204,21 @@ class FiberXDBMS {
         }
     }
 
+    // method to create schema models
+    public createSchemaModels(output_dir: string): boolean {
+        try {
+            this.assertHandshakeComplete();
+
+            this.model_builder!.generateModels(output_dir);
+            console.log(`[FiberXDBMS] Models generated.`);
+            return true;
+        }
+        catch (err) {
+            console.error("❌ Error creaing schema models:", err);
+            return false;
+        }
+    }
+
 }
 
 export default FiberXDBMS;
@@ -237,6 +256,8 @@ const g = async () => {
     const migration_priority = 3
     const timestamps = true
     dbms.createSchema(model_name, table_name, datasource, columns, primary_key, indexes, migration_priority, timestamps);
+
+    dbms.createSchemaModels("/Users/ojooh/Documents/Projects/fibase/server_app/models");
     // dbms.deleteSchema(model_name);
 
     // dbms.generateMigrations();
