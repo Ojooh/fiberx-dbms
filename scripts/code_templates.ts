@@ -205,8 +205,8 @@ export default new ${schema.model_name}DeltaMigration();
 const model_code_templates = (app_id: string, model_name: string) => {
 
 return `
-import BaseModel from "fiberx_dbms/models/base_model";
-import ${model_name}Schema from "fiberx_dbms/${app_id}/${pascalToSnake(model_name)}";
+import BaseModel from "fiberx-dbms/dist/models/base_model";
+import ${model_name}Schema from "fiberx-dbms/dist/schema/${app_id}/${pascalToSnake(model_name)}";
 
 
 class ${model_name} extends BaseModel {
