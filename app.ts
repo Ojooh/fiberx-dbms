@@ -115,7 +115,7 @@ class FiberXDBMS {
             this.assertHandshakeComplete();
 
             const schema_inputs     = { model_name, table_name, datasource, columns, primary_key,  indexes, migration_priority, timestamps };
-            const commit_message    = `chore(schema): created schema "${model_name}" for "${table_name}" on "${datasource}"`;
+            const commit_message    = `chore(schema): created schema '${model_name}' for '${table_name}' on '${datasource}'`;
 
             this.schema_builder!.createSchema(schema_inputs)
             console.log(`[FiberXDBMS] Schema "${model_name}" created.`);
@@ -134,7 +134,7 @@ class FiberXDBMS {
         try {
             this.assertHandshakeComplete();
             
-            const commit_message    = `chore(schema): deleted schema "${model_name}"`;
+            const commit_message    = `chore(schema): deleted schema '${model_name}'`;
 
             this.schema_builder!.deleteSchema(model_name);
             console.log(`[FiberXDBMS] Schema "${model_name}" deleted.`);
@@ -173,7 +173,7 @@ class FiberXDBMS {
             await this.migration_manager!.executeMigrations(resolved_app_id);
             console.log(`[FiberXDBMS] Migrations executed for app_id: ${resolved_app_id}`);
 
-            await this.git_util.commitAndPush(`chore(migration): executed migrations for app "${resolved_app_id}"`);
+            await this.git_util.commitAndPush(`chore(migration): executed migrations for app '${resolved_app_id}'`);
             return true
         }
         catch (err) {
@@ -191,7 +191,7 @@ class FiberXDBMS {
             await this.migration_manager!.undoMigrations(resolved_app_id);
             console.log(`[FiberXDBMS] Migrations undone for app_id: ${resolved_app_id}`);
 
-            await this.git_util.commitAndPush(`chore(migration): undone migrations for app "${resolved_app_id}"`);
+            await this.git_util.commitAndPush(`chore(migration): undone migrations for app '${resolved_app_id}'`);
             return true
         }
         catch (err) {
