@@ -1,5 +1,5 @@
 {
-  "name": "fiberx_dbms",
+  "name": "fiberx-dbms",
   "version": "0.0.1",
   "description": "Provides ORM-like secure Models with permission enforcement based on app-specific keys",
   "main": "dist/app.js",
