@@ -5,7 +5,7 @@ class GitUtil {
     private working_directory: string;
     private repository_branch: string;
 
-    constructor(repository_branch: string, working_directory: string = path.resolve(__dirname, "../../")) {
+    constructor(repository_branch: string, working_directory: string = path.resolve(__dirname, "../")) {
         this.working_directory  = working_directory;
         this.repository_branch  = repository_branch
     }
@@ -36,6 +36,7 @@ class GitUtil {
 
     public async pullLatest(): Promise<boolean> {
         try {
+            console.log(this.working_directory);
             console.log("[Git] Pulling latest changes...");
             await this.runCommand(`git pull origin ${this.repository_branch}`);
             console.log("[Git] ✅ Pull complete.");

@@ -1,0 +1,36 @@
+# Node.js
+node_modules/
+dist/
+build/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Environment
+.env
+.env.*
+
+# DBMS generated state
+app_configs/env/
+app_configs/migration_logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Git
+.git/
+
+
+node_modules/
+
+app_configs/env.yaml
