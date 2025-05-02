@@ -30,7 +30,4 @@ Thumbs.db
 # Git
 .git/
 
-
-node_modules/
-
 app_configs/env.yaml
