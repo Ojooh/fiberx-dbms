@@ -1,6 +1,9 @@
 {
     "compilerOptions": {
-      "target": "es2015",
+      "outDir": "./dist",
+      "rootDir": "./",
+      "module": "CommonJS",
+      "target": "ES2020",
       "lib": ["es6"],
       "moduleResolution": "node",
       "esModuleInterop": true,
@@ -11,5 +14,7 @@
       "paths": {
         "@/*": ["./*"] // Alias "@" points to "src" folder
       }
-    }
+    },
+    "include": ["**/*.ts"],
+    "exclude": ["node_modules", "dist"]
   }
