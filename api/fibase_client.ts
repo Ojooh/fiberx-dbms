@@ -1,10 +1,10 @@
 import crypto from "crypto";
 import axios from "axios";
-import GlobalVariableManager from "@/utils/global_variable_manager";
+import GlobalVariableManager from "../utils/global_variable_manager";
 import { 
     FibaseHandshakeRequestInterface, 
     FibaseHandshakeResponseInterface 
-} from "@/types/common_types"
+} from "../types/common_types"
 
 class FibaseAPIClient {
 	public global_vars:GlobalVariableManager

@@ -1,5 +1,5 @@
 import { createPool, Pool, PoolConnection } from 'mysql2/promise';
-import BaseDatasourceConnector from "@/datasource_connectors/base_datasource_connector";
+import BaseDatasourceConnector from "./base_datasource_connector";
 
 class MysqlDatasourceConnector extends BaseDatasourceConnector {
     private pool: Pool | null = null;

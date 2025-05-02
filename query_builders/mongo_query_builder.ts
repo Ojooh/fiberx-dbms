@@ -1,9 +1,4 @@
-import { 
-    TableSchemaInterface, 
-    QueryFormatOptionInterface, 
-    TableColumnInterface,
-    ColumnPositionType
-} from "@/types/common_types"
+import {  TableSchemaInterface, QueryFormatOptionInterface, TableColumnInterface, ColumnPositionType } from "../types/common_types"
 import BaseQueryBuilder from "./base_query_builder";
 
 class MongoQueryBuilder extends BaseQueryBuilder {

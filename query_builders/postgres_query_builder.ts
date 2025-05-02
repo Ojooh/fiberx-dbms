@@ -1,12 +1,7 @@
-import { 
-    TableSchemaInterface, 
-    QueryFormatOptionInterface, 
-    TableColumnInterface,
-    ColumnPositionType
-} from "@/types/common_types"
+import { TableSchemaInterface, QueryFormatOptionInterface, TableColumnInterface,ColumnPositionType } from "../types/common_types"
 
 import BaseQueryBuilder from "./base_query_builder";
-import mapToPostgresType from "@/datatypes/postgres"
+import mapToPostgresType from "../datatypes/postgres"
 
 
 

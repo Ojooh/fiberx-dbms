@@ -1,22 +1,20 @@
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 
-import GitUtil from "@/utils/git_util";
-import FibaseAPIClient from "@/api/fibase_client";
+import GitUtil from "./utils/git_util";
+import FibaseAPIClient from "./api/fibase_client";
 import ModelBuilderScript from "./scripts/model_builder_script";
-import SchemaBuilderScript from "@/scripts/schema_builder_script";
-import GlobalVariableManager from "@/utils/global_variable_manager";
+import SchemaBuilderScript from "./scripts/schema_builder_script";
+import GlobalVariableManager from "./utils/global_variable_manager";
 import MigrationManagerScript from "./scripts/migration_manager_script";
-import DatasourceRegistry from "@/datasource_connectors/datasource_registry";
-
-import { model_code_templates } from "@/scripts/code_templates";
+import DatasourceRegistry from "./datasource_connectors/datasource_registry";
 
 import { 
     EnvConfigInterface, 
     SupportedDatasourceType,
     TableColumnType,
     TableIndexInterface,
-} from "@/types/common_types";
+} from "./types/common_types";
 
 
 class FiberXDBMS {
@@ -92,8 +90,6 @@ class FiberXDBMS {
             if (!this.api_client) {
                 this.api_client = new FibaseAPIClient(app_id, public_key);
             }
-
-            await this.git_util.pullLatest();
 
             await this.api_client.refreshCacheIfNeeded();
 
@@ -205,9 +201,11 @@ class FiberXDBMS {
     }
 
     // method to create schema models
-    public createSchemaModels(output_dir: string): boolean {
+    public async createSchemaModels(output_dir: string): Promise<boolean> {
         try {
             this.assertHandshakeComplete();
+            await this.git_util.pullLatest();
+
 
             this.model_builder!.generateModels(output_dir);
             console.log(`[FiberXDBMS] Models generated.`);

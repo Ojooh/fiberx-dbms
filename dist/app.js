@@ -38,13 +38,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = __importStar(require("fs"));
 const yaml = __importStar(require("js-yaml"));
-const git_util_1 = __importDefault(require("@/utils/git_util"));
-const fibase_client_1 = __importDefault(require("@/api/fibase_client"));
+const git_util_1 = __importDefault(require("./utils/git_util"));
+const fibase_client_1 = __importDefault(require("./api/fibase_client"));
 const model_builder_script_1 = __importDefault(require("./scripts/model_builder_script"));
-const schema_builder_script_1 = __importDefault(require("@/scripts/schema_builder_script"));
-const global_variable_manager_1 = __importDefault(require("@/utils/global_variable_manager"));
+const schema_builder_script_1 = __importDefault(require("./scripts/schema_builder_script"));
+const global_variable_manager_1 = __importDefault(require("./utils/global_variable_manager"));
 const migration_manager_script_1 = __importDefault(require("./scripts/migration_manager_script"));
-const datasource_registry_1 = __importDefault(require("@/datasource_connectors/datasource_registry"));
+const datasource_registry_1 = __importDefault(require("./datasource_connectors/datasource_registry"));
 class FiberXDBMS {
     constructor() {
         this.yaml_log_file_path = './app_configs/env.yaml';
@@ -103,7 +103,6 @@ class FiberXDBMS {
             if (!this.api_client) {
                 this.api_client = new fibase_client_1.default(app_id, public_key);
             }
-            await this.git_util.pullLatest();
             await this.api_client.refreshCacheIfNeeded();
             await this.registerDataSourceCoonectors();
             this.handshake_complete = true;
@@ -194,9 +193,10 @@ class FiberXDBMS {
         }
     }
     // method to create schema models
-    createSchemaModels(output_dir) {
+    async createSchemaModels(output_dir) {
         try {
             this.assertHandshakeComplete();
+            await this.git_util.pullLatest();
             this.model_builder.generateModels(output_dir);
             console.log(`[FiberXDBMS] Models generated.`);
             return true;

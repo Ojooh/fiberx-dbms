@@ -1,4 +1,4 @@
-import { DatasourceConnectorOptionInterface } from "@/types/common_types";
+import { DatasourceConnectorOptionInterface } from "../types/common_types";
 
 abstract class BaseDatasourceConnector {
     options: DatasourceConnectorOptionInterface;

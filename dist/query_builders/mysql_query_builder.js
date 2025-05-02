@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const mysql_1 = __importDefault(require("@/datatypes/mysql"));
+const mysql_1 = __importDefault(require("../datatypes/mysql"));
 const base_query_builder_1 = __importDefault(require("./base_query_builder"));
 class MysqlQueryBuilder extends base_query_builder_1.default {
     constructor() {

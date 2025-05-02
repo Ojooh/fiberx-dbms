@@ -3,7 +3,7 @@ import {
     SchemaTemplateType, 
     InitialMigrationTemplateType,
     DeltaMigrationTemplateType
-} from "@/types/common_types";
+} from "../types/common_types";
 
 const pascalToSnake = (name: string): string => {
     return name.replace(/([a-z0-9])([A-Z])/g, '$1_$2').replace(/([A-Z])([A-Z][a-z])/g, '$1_$2').toLowerCase();
@@ -15,8 +15,6 @@ const {
     timestamps, indexes_string, migration_priority, app_id
 } = values;
 return `
-import DataTypes from "@/datatypes";
-
 const ${model_name}Schema = {
     app_id: '${app_id}',
 
@@ -47,9 +45,9 @@ const initial_migration_code_template = (values:InitialMigrationTemplateType):st
     const { schema, column_names, index_names } = values;
     return `
     
-import DatasourceRegistry from "@/datasource_connectors/datasource_registry";
-import getQueryBuilder from "@/query_builders/query_builder_resolver";
-import ${schema.model_name}Schema from "@/schemas/${schema.app_id}/${pascalToSnake(schema.model_name)}";
+import DatasourceRegistry from "../../datasource_connectors/datasource_registry";
+import getQueryBuilder from "../../query_builders/query_builder_resolver";
+import ${schema.model_name}Schema from "../../schemas/${schema.app_id}/${pascalToSnake(schema.model_name)}";
 
 class ${schema.model_name}InitialMigration {
     metadata = {
@@ -101,9 +99,9 @@ const delta_migration_code_template = (values:DeltaMigrationTemplateType): strin
     const { schema, added_cols, added_indx, removed_cols, removed_indx } = values;
 
     return `
-import DatasourceRegistry from "@/datasource_connectors/datasource_registry";
-import getQueryBuilder from "@/query_builders/query_builder_resolver";
-import ${schema.model_name}Schema from "@/schemas/${schema.app_id}/${pascalToSnake(schema.model_name)}";
+import DatasourceRegistry from "../../datasource_connectors/datasource_registry";
+import getQueryBuilder from "../../query_builders/query_builder_resolver";
+import ${schema.model_name}Schema from "../../schemas/${schema.app_id}/${pascalToSnake(schema.model_name)}";
 
 class ${schema.model_name}DeltaMigration {
     metadata = {
@@ -207,8 +205,8 @@ export default new ${schema.model_name}DeltaMigration();
 const model_code_templates = (app_id: string, model_name: string) => {
 
 return `
-import BaseModel from "fiberx-dbms/models/base_model";
-import ${model_name}Schema from "@/schemas/${app_id}/${pascalToSnake(model_name)}";
+import BaseModel from "fiberx_dbms/models/base_model";
+import ${model_name}Schema from "fiberx_dbms/${app_id}/${pascalToSnake(model_name)}";
 
 
 class ${model_name} extends BaseModel {

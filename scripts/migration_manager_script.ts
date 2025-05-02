@@ -5,7 +5,7 @@ import {
     pascalToSnake,
     delta_migration_code_template, 
     initial_migration_code_template
-} from "@/scripts/code_templates";
+} from "../scripts/code_templates";
 
 import { 
     PermissionType, 
@@ -13,10 +13,10 @@ import {
     SchemaWithPriorityInterface,
     MigrationMetadataInterface,
     SchemaMigratedColumnsAndIndexesInterface
-} from "@/types/common_types";
+} from "../types/common_types";
 
-import MigrationLogger from "@/utils/migration_logger";
-import GlobalVariableManager from "@/utils/global_variable_manager";
+import MigrationLogger from "../utils/migration_logger";
+import GlobalVariableManager from "../utils/global_variable_manager";
 
 class MigrationManagerScript {
     private global_vars: any;

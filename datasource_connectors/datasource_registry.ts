@@ -1,8 +1,8 @@
-import BaseDatasourceConnector from "@/datasource_connectors/base_datasource_connector";
-import MysqlDatasource from "@/datasource_connectors/mysql_datasource_connector";
-import PostgresDatasource from "@/datasource_connectors/postgres_datasource_connector";
-import MongoDatasource from "@/datasource_connectors/mongo_datasource_connector";
-import { DatasourceConnectorOptionInterface } from "@/types/common_types";
+import BaseDatasourceConnector from "./base_datasource_connector";
+import MysqlDatasource from "./mysql_datasource_connector";
+import PostgresDatasource from "./postgres_datasource_connector";
+import MongoDatasource from "./mongo_datasource_connector";
+import { DatasourceConnectorOptionInterface } from "../types/common_types";
 
 type SupportedDatasourceType = 'mysql_db' | 'postgressql_db' | 'mongo_db';
 

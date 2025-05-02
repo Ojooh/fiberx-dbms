@@ -1,8 +1,8 @@
 import * as fs from "fs";
 import * as yaml from "js-yaml";
-import UUIDGeneratorUtil from "@/utils/uuid_generator_util";
+import UUIDGeneratorUtil from "./uuid_generator_util";
 
-import { MigrationLogEntryInterface, MigrationStatusType } from "@/types/common_types";
+import { MigrationLogEntryInterface, MigrationStatusType } from "../types/common_types";
 
 class MigrationLogger {
     private yaml_log_file_path: string = './app_configs/migration_logs.yaml';

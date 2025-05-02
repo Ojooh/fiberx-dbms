@@ -1,9 +1,9 @@
 import fs from 'fs';
 import path from 'path';
-import { schema_code_template, pascalToSnake } from "@/scripts/code_templates";
-import GlobalVariableManager from "@/utils/global_variable_manager";
+import { schema_code_template, pascalToSnake } from "../scripts/code_templates";
+import GlobalVariableManager from "../utils/global_variable_manager";
 
-import { PermissionType } from "@/types/common_types";
+import { PermissionType } from "../types/common_types";
 
 const SupportedDatasources = ['mysql_db', 'postgressql_db', 'mongo_db'] as const;
 

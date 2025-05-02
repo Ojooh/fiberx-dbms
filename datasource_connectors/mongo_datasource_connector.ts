@@ -1,5 +1,5 @@
 import { MongoClient, Db, ClientSession } from 'mongodb';
-import BaseDatasourceConnector from "@/datasource_connectors/base_datasource_connector";
+import BaseDatasourceConnector from "./base_datasource_connector";
 
 class MongoDatasourceConnector extends BaseDatasourceConnector {
     private client: MongoClient | null = null;

@@ -1,4 +1,4 @@
-import DataTypes from "@/datatypes/index";
+import DataTypes from "../datatypes/index";
 
 
 

@@ -1,4 +1,4 @@
-import { TableSchemaInterface, QueryFormatOptionInterface } from "@/types/common_types";
+import { TableSchemaInterface, QueryFormatOptionInterface } from "../types/common_types";
 
 abstract class BaseQueryBuilder {
     abstract escapeField(field: string): string;

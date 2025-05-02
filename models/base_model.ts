@@ -1,9 +1,9 @@
-import getQueryBuilder from "@/query_builders/query_builder_resolver";
-import DatasourceRegistry from "@/datasource_connectors/datasource_registry";
-import EventSystem from "@/utils/event_system_util";
-import GlobalVariableManager from "@/utils/global_variable_manager";
+import getQueryBuilder from "../query_builders/query_builder_resolver";
+import DatasourceRegistry from "../datasource_connectors/datasource_registry";
+import EventSystem from "../utils/event_system_util";
+import GlobalVariableManager from "../utils/global_variable_manager";
 
-import { TableSchemaInterface, ModelConstructorType } from "@/types/common_types";
+import { TableSchemaInterface, ModelConstructorType } from "../types/common_types";
 
 abstract class BaseModel {
     protected schema: TableSchemaInterface;

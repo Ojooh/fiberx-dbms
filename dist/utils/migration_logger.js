@@ -38,7 +38,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = __importStar(require("fs"));
 const yaml = __importStar(require("js-yaml"));
-const uuid_generator_util_1 = __importDefault(require("@/utils/uuid_generator_util"));
+const uuid_generator_util_1 = __importDefault(require("./uuid_generator_util"));
 class MigrationLogger {
     constructor() {
         this.yaml_log_file_path = './app_configs/migration_logs.yaml';

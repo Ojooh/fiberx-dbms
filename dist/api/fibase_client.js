@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const crypto_1 = __importDefault(require("crypto"));
 const axios_1 = __importDefault(require("axios"));
-const global_variable_manager_1 = __importDefault(require("@/utils/global_variable_manager"));
+const global_variable_manager_1 = __importDefault(require("../utils/global_variable_manager"));
 class FibaseAPIClient {
     constructor(app_id, public_key) {
         // Method to re send handshake if cached data expired

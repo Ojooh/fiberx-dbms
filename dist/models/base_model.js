@@ -3,10 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const query_builder_resolver_1 = __importDefault(require("@/query_builders/query_builder_resolver"));
-const datasource_registry_1 = __importDefault(require("@/datasource_connectors/datasource_registry"));
-const event_system_util_1 = __importDefault(require("@/utils/event_system_util"));
-const global_variable_manager_1 = __importDefault(require("@/utils/global_variable_manager"));
+const query_builder_resolver_1 = __importDefault(require("../query_builders/query_builder_resolver"));
+const datasource_registry_1 = __importDefault(require("../datasource_connectors/datasource_registry"));
+const event_system_util_1 = __importDefault(require("../utils/event_system_util"));
+const global_variable_manager_1 = __importDefault(require("../utils/global_variable_manager"));
 class BaseModel {
     constructor(data) {
         this.event_system = new event_system_util_1.default();

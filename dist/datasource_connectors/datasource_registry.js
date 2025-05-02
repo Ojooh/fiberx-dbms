@@ -3,9 +3,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const mysql_datasource_connector_1 = __importDefault(require("@/datasource_connectors/mysql_datasource_connector"));
-const postgres_datasource_connector_1 = __importDefault(require("@/datasource_connectors/postgres_datasource_connector"));
-const mongo_datasource_connector_1 = __importDefault(require("@/datasource_connectors/mongo_datasource_connector"));
+const mysql_datasource_connector_1 = __importDefault(require("./mysql_datasource_connector"));
+const postgres_datasource_connector_1 = __importDefault(require("./postgres_datasource_connector"));
+const mongo_datasource_connector_1 = __importDefault(require("./mongo_datasource_connector"));
 class DatasourceRegistry {
     constructor() {
         this.registry = new Map();

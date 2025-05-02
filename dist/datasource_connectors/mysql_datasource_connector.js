@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const promise_1 = require("mysql2/promise");
-const base_datasource_connector_1 = __importDefault(require("@/datasource_connectors/base_datasource_connector"));
+const base_datasource_connector_1 = __importDefault(require("./base_datasource_connector"));
 class MysqlDatasourceConnector extends base_datasource_connector_1.default {
     constructor() {
         super(...arguments);

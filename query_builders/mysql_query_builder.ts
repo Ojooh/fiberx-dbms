@@ -1,11 +1,6 @@
-import { 
-    TableSchemaInterface, 
-    QueryFormatOptionInterface, 
-    TableColumnInterface,
-    ColumnPositionType
-} from "@/types/common_types";
+import { TableSchemaInterface, QueryFormatOptionInterface, TableColumnInterface,ColumnPositionType } from "../types/common_types";
 
-import mapToMySQLType from "@/datatypes/mysql"
+import mapToMySQLType from "../datatypes/mysql"
 import BaseQueryBuilder from "./base_query_builder";
 
 class MysqlQueryBuilder extends BaseQueryBuilder {

@@ -1,11 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 
-import { pascalToSnake, model_code_templates } from "@/scripts/code_templates";
+import { pascalToSnake, model_code_templates } from "../scripts/code_templates";
 
-import {  PermissionType } from "@/types/common_types";
+import {  PermissionType } from "../types/common_types";
 
-import GlobalVariableManager from "@/utils/global_variable_manager";
+import GlobalVariableManager from "../utils/global_variable_manager";
 
 class ModelBuilderScript {
     private global_vars: any;
