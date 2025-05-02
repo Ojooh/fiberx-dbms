@@ -1,0 +1,37 @@
+migrations:
+  - id: MIG-MA5U7BE75RP8
+    app_id: fibase
+    file: role_001_initial.ts
+    status: rolledback
+    created_at: '2025-05-01T20:48:14.191Z'
+    updated_at: '2025-05-01T21:54:17.509Z'
+  - id: MIG-MA5U7BEAXYPV
+    app_id: fibase
+    file: member_001_initial.ts
+    status: rolledback
+    created_at: '2025-05-01T20:48:14.193Z'
+    updated_at: '2025-05-01T21:54:17.428Z'
+  - id: MIG-MA5VSLNV8XVQ
+    app_id: fibase
+    file: role_002_update.ts
+    status: pending
+    created_at: '2025-05-01T21:32:46.891Z'
+    updated_at: '2025-05-01T21:40:01.109Z'
+  - id: MIG-MA5VSLPM28QJ
+    app_id: fibase
+    file: member_002_update.ts
+    status: pending
+    created_at: '2025-05-01T21:32:46.954Z'
+    updated_at: '2025-05-01T21:40:01.170Z'
+  - id: MIG-MA5VXSUOY3QS
+    app_id: fibase
+    file: member_003_update.ts
+    status: pending
+    created_at: '2025-05-01T21:36:49.488Z'
+    updated_at: '2025-05-01T21:36:49.488Z'
+  - id: MIG-MA5W4ED4WF2V
+    app_id: fibase
+    file: .ts
+    status: pending
+    created_at: '2025-05-01T21:41:57.303Z'
+    updated_at: '2025-05-01T21:43:56.178Z'

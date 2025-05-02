@@ -1,0 +1,35 @@
+{
+  "name": "fiberx_dbms",
+  "version": "0.0.1",
+  "description": "Provides ORM-like secure Models with permission enforcement based on app-specific keys",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ORM",
+    "DATABASE",
+    "PERMISSIONS",
+    "FIBASE",
+    "DBMS"
+  ],
+  "author": "FiberX Innovations",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.9.0",
+    "crypto": "^1.0.1",
+    "js-yaml": "^4.1.0",
+    "mongodb": "^6.16.0",
+    "mysql2": "^3.14.1",
+    "pg": "^8.15.6"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/moment": "^2.11.29",
+    "@types/node": "^22.15.2",
+    "@types/pg": "^8.11.14",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.8.3"
+  }
+}

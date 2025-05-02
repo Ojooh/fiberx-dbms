@@ -1,0 +1,39 @@
+{
+    "app_id": "fibase",
+    "environments": ["development", "staging", "production"],
+    "data_sources": ["mysql_db"],
+    "connections": {
+        "mysql_db": {
+            "type": "mysql_db",
+            "host": "127.0.0.1",
+            "port": 3306,
+            "username": "root",
+            "password": "password4",
+            "database": "fibase",
+            "pool_max": 10,
+            "pool_min": 0,
+            "idle_timeout": 50000,
+            "connection_timeout": 5000
+        }
+    },
+    "apps_with_model_permissions": [
+        {
+            "id": "fibase",
+            "models": [
+                {
+                    "name": "Member",
+                    "permissions": ["read", "create", "update", "delete", "create_schema", "make_migrations", "migrate"]
+                },
+                {
+                    "name": "Role",
+                    "permissions": ["read", "create", "update", "delete", "create_schema", "make_migrations", "migrate"]
+                },
+                {
+                    "name": "Delete",
+                    "permissions": ["read", "create", "update", "delete", "create_schema", "make_migrations", "migrate", "delete_schema"]
+                }
+            ]
+        }
+    ],
+    "expires_at": "2025-04-28T14:27:51.551928"
+}
