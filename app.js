@@ -8,13 +8,13 @@ const ModelAndSchemaLoader          = require("./scripts/model_and_schema_loader
 const DatasourceRegistry            = require("./datasource_connectors/datasource_registry");
 
 class FiberXDBMS {
-    constructor(app_id, public_id, fibase_base_url = null, logger = null) {
+    constructor(app_id, public_key, fibase_base_url = null, logger = null) {
         this.name                   = "fiberx_dbms";  
         this.app_id                 = app_id;
-        this.public_id              = public_id;
+        this.public_key             = public_key;
 
         this.logger                 = logger || console;
-        this.fibase_client          = new FibaseAPIClient(app_id, public_id, fibase_base_url, logger);
+        this.fibase_client          = new FibaseAPIClient(app_id, public_key, fibase_base_url, logger);
         this.schema_fetcher         = new ModelAndSchemaLoader(logger);
         this.datasource_register    = DatasourceRegistry.getInstance();
     }
@@ -40,7 +40,7 @@ class FiberXDBMS {
             return expected_signature === signature;
         }
         catch (error) {
-            params = { error };
+            const params = { error };
             this.logger.error(`Error in ${this.name} - isCentralApp method`, params)
             return false
         }
@@ -66,7 +66,7 @@ class FiberXDBMS {
     // Method to initialize DBMS
     initializeDBMS = async (manaual_schema_urls = []) => {
         try {
-            const is_central_app = this.#isCentralApp(app_id, public_id);
+            const is_central_app = this.#isCentralApp(this.app_id, this.public_key);
 
             if(is_central_app) { this.fibase_client.storeAPIResponseData(manaual_schema_urls); }
 
@@ -90,7 +90,7 @@ class FiberXDBMS {
             }
         }
         catch (error) {
-           params = { error };
+           const params = { error };
            this.logger.error(`Error in ${this.name} - initializeDBMS method`, params)
         }
 

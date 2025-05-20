@@ -64,7 +64,7 @@ class FibaseAPIClient {
             console.log('[FIBASE] Handshake successful.');
             return true
         } catch (error) {
-            params = { error };
+            const params = { error };
             this.logger.error(`❌ Error in ${this.name} - sendHandShake method`, params);
             throw error;
         }
