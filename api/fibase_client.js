@@ -51,6 +51,7 @@ class FibaseAPIClient {
         if (!this.global_vars.getVariable("SCHEMA_FILES")) {
             throw new Error("Handshake or manual setup not completed. Cannot proceed.");
         }
+        return true
     }
 
     // Method to validate app and fetch schema urls

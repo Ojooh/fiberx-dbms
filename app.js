@@ -6,6 +6,7 @@ const crypto                        = require("crypto");
 const FibaseAPIClient               = require("./api/fibase_client");
 const ModelAndSchemaLoader          = require("./scripts/model_and_schema_loader");
 const DatasourceRegistry            = require("./datasource_connectors/datasource_registry");
+const GlobalVariableManager         = require("./utils/global_variable_manager");
 
 class FiberXDBMS {
     constructor(app_id, public_key, fibase_base_url = null, logger = null) {
@@ -16,7 +17,9 @@ class FiberXDBMS {
         this.logger                 = logger || console;
         this.fibase_client          = new FibaseAPIClient(app_id, public_key, fibase_base_url, logger);
         this.schema_fetcher         = new ModelAndSchemaLoader(logger);
+
         this.datasource_register    = DatasourceRegistry.getInstance();
+        this.global_vars            = GlobalVariableManager.getInstance();
     }
 
     // Method to check if the app is a central app
@@ -83,10 +86,12 @@ class FiberXDBMS {
                 this.logger.log(`Fetching schema and migration files...`);
                 await this.schema_fetcher.run();
                 this.logger.log(`Schema and migration files fetched successfully.`);
+
+                return true
             }
             else {
-                this.logger.error(`Handshake failed for app_id: ${this.app_id}`);
-                return;
+                this.logger.error(`Handshake failed for app_id: ${this.app_id} is_central_app: ${is_central_app}`);
+                return false;
             }
         }
         catch (error) {
@@ -100,11 +105,3 @@ class FiberXDBMS {
 
 module.exports = FiberXDBMS;
 
-const fibase_dbms = new FiberXDBMS("app_id", "public_key");
-fibase_dbms.initializeDBMS(["https://example.com/schema1.json", "https://example.com/schema2.json"])
-    .then(() => {
-        console.log("DBMS initialized successfully.");
-    })
-    .catch((error) => {
-        console.error("Error initializing DBMS:", error);
-    });
