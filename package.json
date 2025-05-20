@@ -1,0 +1,35 @@
+{
+  "name": "fiberx-dbms",
+  "version": "0.0.7",
+  "description": "database schema management system designed for distributed applications. It allows centralized schema creation, versioned migration handling, and Git-based syncing across multiple services using a plug-and-play architecture for MySQL, Postgres, and MongoDB.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ojooh/fiberx-dbms.git"
+  },
+  "keywords": [
+    "ORM",
+    "DATABASE",
+    "PERMISSIONS",
+    "FIBASE",
+    "DBMS",
+    "FIBERX"
+  ],
+  "author": "FiberX Innovations",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Ojooh/fiberx-dbms/issues"
+  },
+  "homepage": "https://github.com/Ojooh/fiberx-dbms#readme",
+  "dependencies": {
+    "@google-cloud/storage": "^7.16.0",
+    "axios": "^1.9.0",
+    "js-yaml": "^4.1.0",
+    "mongodb": "^6.16.0",
+    "mysql2": "^3.14.1",
+    "pg": "^8.15.6"
+  }
+}
