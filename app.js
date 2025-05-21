@@ -18,7 +18,7 @@ class FiberXDBMS {
         this.fibase_client          = new FibaseAPIClient(app_id, public_key, fibase_base_url, logger);
         this.schema_fetcher         = new ModelAndSchemaLoader(logger);
 
-        this.datasource_register    = DatasourceRegistry.getInstance();
+        this.datasource_register    = DatasourceRegistry.getInstance(this.logger);
         this.global_vars            = GlobalVariableManager.getInstance();
     }
 

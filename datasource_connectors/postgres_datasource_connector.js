@@ -1,26 +1,79 @@
 const { Pool, PoolClient }  =  require("pg");
 
 class PostgresDatasourceConnector {
-    constructor(options) {
-        this.options = options;
+   constructor(options, logger = null) {
+        this.name       = "postgressql_db";
+        this.options    = options;
+        this.logger     = logger || console;
+    }
+
+    // Method to generate create database query
+    #generateCreateDatabaseQuery = (database, collation = "", charset = "") => {
+        if (!/^[a-zA-Z0-9_]+$/.test(database)) {
+            throw new Error("Invalid database name");
+        }
+        
+        let query = `CREATE DATABASE \`${database}\``;
+
+        if (charset) { query += ` ENCODING '${encoding}`; }
+
+        if (collation) { query += ` LC_COLLATE='${lc_collate}`; }
+
+
+        return query;
+    }
+
+    // Method to connect and check if database exist else create it
+    #checkAndCreateDatabase = async () => {
+        try {
+            // 1. Connect without database
+            const { host, port, username: user, password, database = "postgres", collation, charset } = this.options;
+            
+            const bootstrap_pool = new Pool({ host, port, user, password, database: 'postgres' });
+				
+            // Step 2: Check if database exists
+			const result = await bootstrap_pool.query( "SELECT 1 FROM pg_database WHERE datname = $1",[database]);
+
+            if (result?.rowCount === 0) {
+				this.logger.info(`Database '${database}' does not exist. Creating...`);
+                const query = this.#generateCreateDatabaseQuery(database, collation, charset);
+				await bootstrap_pool.query(query);
+				this.logger.info(`Database '${database}' created successfully.`);
+			} 
+            else { this.logger.info(`Database '${database}' already exists.`); }
+
+
+			await bootstrap_pool.end();
+        }
+        catch (error) {
+            const params  = { options: this.options, error }
+            this.logger.error(`Error in ${this.name} - checkAndCreateDatabase method`, params);
+            throw error;
+        }
+
+
     }
 
     // Method to connect to PostgresSQL
     connect = async ()  => {
         try {
-            this.pool = new Pool({
-                host: this.options.host,
-                port: this.options.port,
-                user: this.options.username,
-                password: this.options.password,
-                database: this.options.database,
-                max: this.options.pool_max || 10,
-                idleTimeoutMillis: this.options.idle_timeout || 50000,
-                connectionTimeoutMillis: this.options.connection_timeout || 5000,
-            });
+            await this.#checkAndCreateDatabase();
+
+            const { 
+                host, port, username: user, password, database, 
+                pool_max: max = 10, idle_timeout: idleTimeoutMillis =50000, 
+                connection_timeout: connectionTimeoutMillis  = 5000 
+            } = this.options;
+
+            // 1. Create a connection pool
+            this.pool = new Pool({ host, port, user, password, database, max, idleTimeoutMillis, connectionTimeoutMillis });
+
             console.info("Postgres connection established.");
-        } catch (error) {
-            console.error(`error in connect method`, { error });
+        } 
+        catch (error) {
+            const params = { options: this.options, error }
+            this.logger.error(`Error in ${this.name} - connect method`, params);
+            throw error;
         }
     }
 
@@ -30,16 +83,21 @@ class PostgresDatasourceConnector {
             if (this.pool) {
                 await this.pool.end();
                 this.pool = null;
-                console.info("Postgres connection closed.");
+                this.logger.info("Postgres connection closed.");
             }
-        } catch (error) {
-            console.error(`error in disconnect method`, { error });
+        } 
+        catch (error) {
+            const params = { error };
+            this.logger.error(`Error in ${this.name} - disconnect method`, params);
+            this.pool = null;
         }
     }
 
     // Method to begin transaction
     beginTransaction = async () => {
-        if (!this.pool) throw new Error("Database pool not established");
+        if (!this.pool) { throw new Error("Database pool not established"); }
+
+
         const client = await this.pool.connect();
         await client.query('BEGIN');
         return client;
@@ -60,18 +118,21 @@ class PostgresDatasourceConnector {
     // method to execute query
     executeQuery = async ( query, options ) => {
         try {
-            if (!this.pool) throw new Error("Database pool not established");
+            if (!this.pool) { throw new Error("Database pool not established"); }
 
-            const values = options?.values || [];
-            const client = options?.transaction;
+            const values            = options?.values || [];
+            const connection        = options?.transaction || this.pool;
 
-            const result = client
-                ? await client.query(query, values)
-                : await this.pool.query(query, values);
+            this.logger.info(`Executing query`, { query, options });
+
+            const result = await connection.query(query, values)
 
             return result.rows;
-        } catch (error) {
-            console.error(`error in executeQuery method`, { query, options, error });
+        } 
+        catch (error) {
+            const params = { query, options, error };
+            this.logger.error(`Error in ${this.name} - executeQuery method`, params);
+            throw error;
         }
     }
 }

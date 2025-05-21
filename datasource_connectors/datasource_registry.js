@@ -4,13 +4,14 @@ const MongoDatasource           =  require("./mongo_datasource_connector");
 
 
 class DatasourceRegistry {
-    constructor() {
-        this.registry = new Map();
+    constructor(logger = null) {
+        this.registry       = new Map();
+        this.logger         = logger || console;
     }
 
-    static getInstance = () => {
+    static getInstance = (logger = null) => {
         if (!DatasourceRegistry.instance) {
-            DatasourceRegistry.instance = new DatasourceRegistry();
+            DatasourceRegistry.instance = new DatasourceRegistry(logger);
         }
         
         return DatasourceRegistry.instance;
@@ -22,7 +23,7 @@ class DatasourceRegistry {
     // method to get a connector for a data source
     getDataSource = (name) => {
         const connector = this.registry.get(name);
-        if (!connector) throw new Error(`Connector not registered: ${name}`);
+        if (!connector) { throw new Error(`Connector not registered: ${name}`); }
         return connector;
     }   
 
@@ -39,13 +40,13 @@ class DatasourceRegistry {
 
         switch (name) {
             case 'mysql_db':
-                connector = new MysqlDatasource(options);
+                connector = new MysqlDatasource(options, this.logger);
                 break;
             case 'postgressql_db':
-                connector = new PostgresDatasource(options);
+                connector = new PostgresDatasource(options, this.logger);
                 break;
             case 'mongo_db':
-                connector = new MongoDatasource(options);
+                connector = new MongoDatasource(options, this.logger);
                 break;
             default:
                 throw new Error(`Unsupported datasource type: ${name}`);

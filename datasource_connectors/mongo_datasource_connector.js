@@ -2,26 +2,35 @@ const { MongoClient, Db, ClientSession }  =  require("mongodb");
 
 
 class MongoDatasourceConnector {
-    constructor(options) {
-        this.options = options;
+    constructor(options, logger = null) {
+        this.name       = "mongo_db";
+        this.options    = options;
+        this.logger     = logger || console;
     }
     
     // Method to connect to mongo db client
     connect = async () => {
         try {
-            const uri       = `mongodb://${this.options.host}:${this.options.port}`;
-            this.client     = new MongoClient(uri, {
-                maxPoolSize: this.options.pool_max || 10,
-                minPoolSize: this.options.pool_min || 2,
-                serverSelectionTimeoutMS: 5000,
-            });
+            const { 
+                host, port, username: user, password, database, 
+                pool_max: maxPoolSize = 10, pool_min: minPoolSize = 2,  connection_timeout: serverSelectionTimeoutMS  = 5000 
+            } = this.options;
+
+
+            const auth      = user && password ? `${user}:${password}@` : '';
+            const auth_uri  = `mongodb://${auth}${host}:${port}`;
+
+            this.client     = new MongoClient(uri, { maxPoolSize, minPoolSize,  serverSelectionTimeoutMS, useNewUrlParser: true, useUnifiedTopology: true });
 
             await this.client.connect();
             this.db = this.client.db(this.options.database);
 
-            console.info("MongoDB connection established.");
-        } catch (error) {
-            console.error(`error in connect method`, { error });
+            this.logger.info("MongoDB connection established.");
+        } 
+        catch (error) {
+            const params = { options: this.options, error }
+            this.logger.error(`Error in ${this.name} - connect method`, params);
+            throw error;
         }
     }
 
@@ -32,10 +41,14 @@ class MongoDatasourceConnector {
                 await this.client.close();
                 this.client = null;
                 this.db = null;
-                console.info("MongoDB connection closed.");
+                this.logger.info("MongoDB connection closed.");
             }
-        } catch (error) {
-            console.error(`error in disconnect method`, { error });
+        } 
+        catch (error) {
+            const params    = { error };
+            this.logger.error(`Error in ${this.name} - disconnect method`, params);
+            this.client     = null;
+            this.db         = null;
         }
     }
 
@@ -81,8 +94,10 @@ class MongoDatasourceConnector {
                 default:
                     throw new Error(`Unsupported MongoDB action: ${action}`);
             }
-        } catch (error) {
-            console.error(`error in executeQuery method`, { operation, error });
+        } 
+        catch (error) {
+            const params = { operation, session, error };
+            this.logger.error(`Error in ${this.name} - executeQuery method`, params);
             throw error;
         }
     }
