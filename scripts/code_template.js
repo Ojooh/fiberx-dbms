@@ -5,7 +5,7 @@ const pascalToSnake = (name) => {
 // schema code content template
 const schema_code_template = (values) => {
     const { 
-        model_name, table_name, datasource, columns_string, primary_key, 
+        model_name, table_name, datasource_type, columns_string, primary_key, 
         timestamps, indexes_string, migration_priority, app_id
     } = values;
 
@@ -17,7 +17,7 @@ const ${model_name}Schema = {
 
     model_name: '${model_name}',
 
-    datasource: '${datasource}',
+    datasource_type: '${datasource_type}',
 
     primary_key: '${primary_key}',
 

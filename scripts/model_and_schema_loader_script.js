@@ -9,7 +9,7 @@ const stream_pipeline           = promisify(pipeline);
 const GlobalVariableManager     = require("../utils/global_variable_manager");
 const { modelCodeTemplate, pascalToSnake }     = require("./code_template");
 
-class ModelAndSchemaLoader { 
+class ModelAndSchemaLoaderScript { 
     constructor(logger = null) { 
         this.name               = "schema_and_migration_fetcher";
         this.logger             = logger || console;
@@ -171,4 +171,4 @@ class ModelAndSchemaLoader {
 
 }
 
-module.exports = ModelAndSchemaLoader;
+module.exports = ModelAndSchemaLoaderScript;

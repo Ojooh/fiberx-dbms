@@ -3,10 +3,13 @@ const fs                            = require("fs");
 const path                          = require("path");
 const crypto                        = require("crypto");
 
-const FibaseAPIClient               = require("./api/fibase_client");
-const ModelAndSchemaLoader          = require("./scripts/model_and_schema_loader");
-const DatasourceRegistry            = require("./datasource_connectors/datasource_registry");
 const GlobalVariableManager         = require("./utils/global_variable_manager");
+
+const FibaseAPIClient               = require("./api/fibase_client");
+const DatasourceRegistry            = require("./datasource_connectors/datasource_registry");
+
+const ModelAndSchemaLoaderScript    = require("./scripts/model_and_schema_loader_script");
+const SchemaBuilderScript           = require("./scripts/schema_builder_script");
 
 class FiberXDBMS {
     constructor(app_id, public_key, fibase_base_url = null, logger = null) {
@@ -16,7 +19,7 @@ class FiberXDBMS {
 
         this.logger                 = logger || console;
         this.fibase_client          = new FibaseAPIClient(app_id, public_key, fibase_base_url, logger);
-        this.schema_fetcher         = new ModelAndSchemaLoader(logger);
+        this.schema_fetcher         = new ModelAndSchemaLoaderScript(logger);
 
         this.datasource_register    = DatasourceRegistry.getInstance(this.logger);
         this.global_vars            = GlobalVariableManager.getInstance();
@@ -59,9 +62,9 @@ class FiberXDBMS {
 
             if (type && connection) {
                 await this.datasource_register.initializeConnector(type, connection);
-                console.log(`[FiberXDBMS] Datasource "${name} - ${type}" registered successfully.`);
+                this.logger.log(`[FiberXDBMS] Datasource "${name} - ${type}" registered successfully.`);
             } else {
-                console.warn(`[FiberXDBMS] No connection config found for datasource "${source}".`);
+                this.logger.error(`[FiberXDBMS] No connection config found for datasource "${source}".`);
             }
         }
     }
@@ -99,6 +102,23 @@ class FiberXDBMS {
            this.logger.error(`Error in ${this.name} - initializeDBMS method`, params)
         }
 
+    }
+
+    // Static Method to return schema code content
+    static getSchemaCodeContent = (model_name, app_id, table_name, datasource_type, migration_priority = 1, columns = [], primary_key = "id", indexes = [], timestamps = true, logger = null) => {
+        try {
+            const schema_builder    = new SchemaBuilderScript(logger);
+            const schema_input      = { model_name, app_id, table_name, datasource_type, columns, primary_key, indexes, migration_priority, timestamps };
+            const schema_code       = schema_builder.generateSchemaCode(schema_input);
+            
+            return schema_code
+
+        }
+        catch (error) {
+           const params = { error };
+           this.logger.error(`Error in ${this.name} - getSchemaCodeContent method`, params);
+           return false;
+        }
     }
 
 }
