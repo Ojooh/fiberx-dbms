@@ -28,7 +28,7 @@ class FiberXDBMS {
     // Method to check if the app is a central app
     #isCentralApp = (app_id, public_key) => {
         try { 
-            const identity_path = path.resolve(process.cwd(), "config", "fibase_identity.json");
+            const identity_path = path.resolve(process.cwd(), "configs", "fibase_identity.json");
 
             if (!fs.existsSync(identity_path)) { return false; }
 

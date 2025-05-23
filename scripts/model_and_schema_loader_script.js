@@ -37,7 +37,7 @@ class ModelAndSchemaLoaderScript {
             fs.readdirSync(dir_path).forEach(file => {
                 const full_path = path.join(dir_path, file);
                 if (fs.lstatSync(full_path).isDirectory()) {
-                    this.clearDirectory(full_path); // Recursively clear subdirectories
+                    this.#clearDirectory(full_path); // Recursively clear subdirectories
                     fs.rmdirSync(full_path);
                 } 
                 else {
@@ -72,8 +72,8 @@ class ModelAndSchemaLoaderScript {
 
     // Method to download file 
     #downloadFiles = async (files_array, target_dir) => {
-        const { app_id, file_name, url } = files_array;
-        const file_path = path.join(target_dir, app_id, file_name);
+        const { original_app_id, file_name, url } = files_array;
+        const file_path = path.join(target_dir, original_app_id, file_name);
 
         await this.#downloadFile(url, file_path);
         console.log(`Downloaded ${file_name} to ${file_path}`);
