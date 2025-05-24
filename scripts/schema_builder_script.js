@@ -7,7 +7,7 @@ class SchemaBuilderScript {
     constructor(logger = null) {
         this.name           = "schema_builder_script";
         this.logger         = logger || console;
-        this.source_types   = ["mysql", "postgresql", "sqlite", "mongodb"];
+        this.source_types   = ["mysql_db", "postgressql_db", "mongo_db"];
     }
 
     // Method to validate schema input
