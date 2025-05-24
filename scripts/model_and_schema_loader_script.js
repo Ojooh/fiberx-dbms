@@ -113,7 +113,7 @@ class ModelAndSchemaLoaderScript {
                 fs.writeFileSync(model_path, code_content, { encoding: "utf-8" });
                 this.logger.log(`✅ ${model_name} Model File Generated: ${model_path}`);
             }
-            this.logger.log(`✅ Model files created for ${model_name}.`);
+            this.logger.log(`✅ Model files created`);
             return true;
         }
         catch(error) {
