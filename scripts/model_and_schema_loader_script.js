@@ -81,7 +81,7 @@ class ModelAndSchemaLoaderScript {
 			if (!fs.existsSync(dir_path)) { fs.mkdirSync(dir_path, { recursive: true });}
 
             await this.#downloadFile(url, local_file_path);
-            console.log(`Downloaded ${file_name} to ${file_path}`);
+            console.log(`Downloaded ${file_name} to ${local_file_path}`);
 
         }
     }
@@ -91,7 +91,7 @@ class ModelAndSchemaLoaderScript {
         try {
             this.logger.log(`Creating model files for ${model_name}...`);
             for (const schema_file of files_array) {  
-                const { app_id, file_name: schema_file_name, model_name } = schema_file;
+                const { original_app_id: app_id, file_name: schema_file_name, model_name } = schema_file;
 
                 const model_path                = path.join(this.models_dir, `${pascalToSnake(model_name)}.js`);
                 const schema_full_path          = path.join(this.schemas_dir, app_id, schema_file_name);
@@ -118,7 +118,7 @@ class ModelAndSchemaLoaderScript {
             return true;
         }
         catch(error) {
-            const params = { model_name, files_array, error };
+            const params = { files_array, error };
             this.logger.log(`Error in ${this.name} - #createModelFiles method`, params);
             return false
         }
