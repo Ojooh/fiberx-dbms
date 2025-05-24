@@ -38,7 +38,7 @@ class SchemaBuilderScript {
                 throw new Error("Timestamps must be a boolean value");
             }
 
-            if (!(primary_key in Object.keys(columns))) {
+            if (primary_key && !columns[primary_key]) {
                 throw new Error(`Primary key "${primary_key}" is not defined in columns.`);
             }
 
