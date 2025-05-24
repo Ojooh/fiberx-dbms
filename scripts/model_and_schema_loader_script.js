@@ -50,33 +50,40 @@ class ModelAndSchemaLoaderScript {
     // Method to download file from URL
     #downloadFile = async (url, dest_path) => {
         try {
-            const streamer_method = (res) => {
-                if (res.statusCode !== 200) {
-                    return reject(new Error(`Failed to fetch ${url}. Status: ${res.statusCode}`));
-                }
+            return await new Promise((resolve, reject) => {
+                https.get(url, (res) => {
+                    if (res.statusCode !== 200) {
+                        return reject(new Error(`Failed to fetch ${url}. Status: ${res.statusCode}`));
+                    }
 
-                const file_stream = fs.createWriteStream(dest_path);
-                stream_pipeline(res, file_stream).then(resolve).catch(reject);
-            }
-
-            const resolver_method = (resolve, reject) => {  https.get(url, streamer_method).on('error', reject); }
-
-            return new Promise(resolver_method);
+                    const file_stream = fs.createWriteStream(dest_path);
+                    stream_pipeline(res, file_stream)
+                        .then(resolve)
+                        .catch(reject);
+                }).on('error', reject);
+            });
         }
-        catch(error) {
+        catch (error) {
             const params = { url, dest_path, error };
             this.logger.log(`Error in ${this.name} - #downloadFile method`, params);
-            return false
+            return false;
         }
-    }
+    };
 
     // Method to download file 
     #downloadFiles = async (files_array, target_dir) => {
-        const { original_app_id, file_name, url } = files_array;
-        const file_path = path.join(target_dir, original_app_id, file_name);
+        for (const file of files_array) {
+            const { original_app_id, file_name, url } = file;
+            const dir_path 			= path.join(target_dir, original_app_id);
+			const local_file_path 	= path.join(dir_path, file_name);
 
-        await this.#downloadFile(url, file_path);
-        console.log(`Downloaded ${file_name} to ${file_path}`);
+			// Ensure directory exists
+			if (!fs.existsSync(dir_path)) { fs.mkdirSync(dir_path, { recursive: true });}
+
+            await this.#downloadFile(url, local_file_path);
+            console.log(`Downloaded ${file_name} to ${file_path}`);
+
+        }
     }
 
     // Method to Create Model files and put in model directory
