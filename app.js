@@ -105,10 +105,10 @@ class FiberXDBMS {
     }
 
     // Static Method to return schema code content
-    static getSchemaCodeContent = (model_name, app_id, table_name, datasource_type, migration_priority = 1, columns = [], primary_key = "id", indexes = [], timestamps = true, logger = null) => {
+    static getSchemaCodeContent = (file_name, model_name, app_id, table_name, datasource_type, migration_priority = 1, columns = [], primary_key = "id", indexes = [], timestamps = true, logger = null) => {
         try {
             const schema_builder    = new SchemaBuilderScript(logger);
-            const schema_input      = { model_name, app_id, table_name, datasource_type, columns, primary_key, indexes, migration_priority, timestamps };
+            const schema_input      = { file_name, model_name, app_id, table_name, datasource_type, columns, primary_key, indexes, migration_priority, timestamps };
             const schema_code       = schema_builder.generateSchemaCode(schema_input);
             
             return schema_code
@@ -124,4 +124,5 @@ class FiberXDBMS {
 }
 
 module.exports = FiberXDBMS;
+
 
