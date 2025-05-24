@@ -26,7 +26,7 @@ class SchemaBuilderScript {
                 throw new Error(`Invalid datasource type: ${datasource_type}`);
             }
 
-            if (!Array.isArray(columns) || columns.length === 0) {
+            if (!Object.keys(columns).length) {
                 throw new Error("Columns must be a non-empty array");
             }
 
@@ -38,7 +38,7 @@ class SchemaBuilderScript {
                 throw new Error("Timestamps must be a boolean value");
             }
 
-            if (!(primary_key in columns)) {
+            if (!(primary_key in Object.keys(columns))) {
                 throw new Error(`Primary key "${primary_key}" is not defined in columns.`);
             }
 
