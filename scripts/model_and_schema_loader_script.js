@@ -89,7 +89,6 @@ class ModelAndSchemaLoaderScript {
     // Method to Create Model files and put in model directory
     #createModelFiles = async (files_array) => {
         try {
-            this.logger.log(`Creating model files for ${model_name}...`);
             for (const schema_file of files_array) {  
                 const { original_app_id: app_id, file_name: schema_file_name, model_name } = schema_file;
 
