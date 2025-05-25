@@ -70,6 +70,17 @@ class FiberXDBMS {
         }
     }
 
+    // Method to get data source 
+    getRegistredDataSource = async (datasource_type) => {
+        if (!this.fibase_client.assertHandshakeComplete()) {
+            this.logger.error(`Handshake failed for app_id: ${this.app_id} is_central_app: ${is_central_app}`);
+            return false;
+        }
+
+        return this.datasource_register.getDataSource(datasource_type);
+
+    }
+
     // Method to initialize DBMS
     initializeDBMS = async (manaual_schema_urls = []) => {
         try {

@@ -47,7 +47,7 @@ const getQueryBuilder               = require("fiberx-dbms/query_builders/query_
 const ${model_name}Schema    = require("../../schemas/${app_id}/${pascalToSnake(model_name)}_schema");
 
 class ${model_name}InitialMigration {
-    constructor() {
+    constructor(fiberx_dbms_module) {
         this.metadata = {
             columns: ${JSON.stringify(column_names)},
             indexes: ${JSON.stringify(index_names)},
@@ -55,7 +55,7 @@ class ${model_name}InitialMigration {
             schema: "${model_name}"
         };
 
-        this.connector      = DatasourceRegistry.getInstance().getDataSource(${model_name}Schema.datasource_type);
+        this.connector      = fiberx_dbms_module.getRegistredDataSource(${model_name}Schema.datasource_type);
         this.builder        = getQueryBuilder(${model_name}Schema?.datasource_type);
         this.column_names   = ${JSON.stringify(column_names)};
         this.index_names    = ${JSON.stringify(index_names)};
@@ -80,7 +80,7 @@ class ${model_name}InitialMigration {
     }
 }
 
-module.exports = new ${model_name}InitialMigration();
+module.exports = ${model_name}InitialMigration;
 `;
 };
 
@@ -95,7 +95,7 @@ const getQueryBuilder               = require("fiberx-dbms/query_builders/query_
 const ${model_name}Schema    = require("../../schemas/${app_id}/${pascalToSnake(model_name)}_schema");
 
 class ${model_name}DeltaMigration {
-    constructor() {
+    constructor(fiberx_dbms_module) {
         this.metadata = {
             columns: ${JSON.stringify(added_cols)},
             indexes: ${JSON.stringify(added_indx)},
@@ -103,7 +103,7 @@ class ${model_name}DeltaMigration {
             schema: "${model_name}"
         };
 
-        this.connector          = DatasourceRegistry.getInstance().getDataSource(${model_name}Schema?.datasource_type);
+        this.connector          = fiberx_dbms_module.getRegistredDataSource(${model_name}Schema?.datasource_type);
         this.builder            = getQueryBuilder(${model_name}Schema?.datasource_type);
         this.added_cols         = ${JSON.stringify(added_cols)};
         this.removed_cols       = ${JSON.stringify(removed_cols)};
@@ -173,7 +173,7 @@ class ${model_name}DeltaMigration {
     }
 }
 
-module.exports = new ${model_name}DeltaMigration();
+module.exports = DeltaMigration;
 `;
 };
 
