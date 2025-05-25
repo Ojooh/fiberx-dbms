@@ -55,7 +55,7 @@ class ${model_name}InitialMigration {
             schema: "${model_name}"
         };
 
-        this.connector      = DatasourceRegistry.getInstance().getDataSource(${model_name}Schema.datasource);
+        this.connector      = DatasourceRegistry.getInstance().getDataSource(${model_name}Schema.datasource_type);
         this.builder        = getQueryBuilder(${model_name}Schema?.datasource_type);
         this.column_names   = ${JSON.stringify(column_names)};
         this.index_names    = ${JSON.stringify(index_names)};
