@@ -76,9 +76,9 @@ class SchemaBuilderScript {
                 return false;
             }
 
-            const columns_string = Object.entries(columns).map(([key, value]) => `        ${key}: ${JSON.stringify(value, null, 2).replace(/"([^"]+)":/g, '$1:')},`).join("\n\n");
+            const columns_string = Object.entries(columns).map(([key, value]) => `        ${key}: ${JSON.stringify(value).replace(/"([^"]+)":/g, '$1:')},`).join("\n\n");
 
-            const indexes_string = JSON.stringify(indexes, null, 4).replace(/"([^"]+)":/g, '$1:');
+            const indexes_string = JSON.stringify(indexes).replace(/"([^"]+)":/g, '$1:');
 
             const schema_obj = { 
                 app_id, model_name, table_name, datasource_type, columns_string, 
