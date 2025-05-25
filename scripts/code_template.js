@@ -39,78 +39,78 @@ module.exports = ${model_name}Schema;
 
 // initial migration code template
 const initialMigrationCodeTemplate = (values) => {
-    const { schema, column_names, index_names } = values;
+    const { app_id, model_name, column_names, index_names } = values;
     return `
 
 const DatasourceRegistry            = require("../../datasource_connectors/datasource_registry");
 const getQueryBuilder               = require("../../query_builders/query_builder_resolver");
-const ${schema.model_name}Schema    = require("../../schemas/${schema.app_id}/${pascalToSnake(schema.model_name)}");
+const ${model_name}Schema    = require("../../schemas/${app_id}/${pascalToSnake(model_name)}");
 
-class ${schema.model_name}InitialMigration {
+class ${model_name}InitialMigration {
     constructor() {
         this.metadata = {
             columns: ${JSON.stringify(column_names)},
             indexes: ${JSON.stringify(index_names)},
             timestamp: "${new Date().toISOString()}",
-            schema: "${schema.model_name}"
+            schema: "${model_name}"
         };
 
-        this.connector      = DatasourceRegistry.getInstance().getDataSource(${schema.model_name}Schema.datasource);
-        this.builder        = getQueryBuilder(${schema.model_name}Schema.datasource);
+        this.connector      = DatasourceRegistry.getInstance().getDataSource(${model_name}Schema.datasource);
+        this.builder        = getQueryBuilder(${model_name}Schema?.datasource_type);
         this.column_names   = ${JSON.stringify(column_names)};
         this.index_names    = ${JSON.stringify(index_names)};
     }
 
     async up() {
-        const create_table_query = this.builder.createTable(${schema.model_name}Schema);
+        const create_table_query = this.builder.createTable(${model_name}Schema);
 
         await this.connector.executeQuery(create_table_query);
 
-        const indexes = ${schema.model_name}Schema.indexes;
+        const indexes = ${model_name}Schema.indexes;
 
         for (const index_obj of indexes) {
-            const create_index_query = this.builder.createIndex(${schema.model_name}Schema.table_name, index_obj.fields, true);
+            const create_index_query = this.builder.createIndex(${model_name}Schema.table_name, index_obj.fields, true);
             await this.connector.executeQuery(create_index_query);
         }
     }
 
     async down() {
-        const query = this.builder.dropTable(${schema.model_name}Schema.table_name);
+        const query = this.builder.dropTable(${model_name}Schema?.table_name);
         await this.connector.executeQuery(query);
     }
 }
 
-module.exports = new ${schema.model_name}InitialMigration();
+module.exports = new ${model_name}InitialMigration();
 `;
 };
 
 // delta migration code template
 const deltaMigrationCodeTemplate = (values) => {
-    const { schema, added_cols, added_indx, removed_cols, removed_indx } = values;
+    const { model_name, app_id, added_cols, added_indx, removed_cols, removed_indx } = values;
 
     return `
 
 const DatasourceRegistry            = require("../../datasource_connectors/datasource_registry");
 const getQueryBuilder               = require("../../query_builders/query_builder_resolver");
-const ${schema.model_name}Schema    = require("../../schemas/${schema.app_id}/${pascalToSnake(schema.model_name)}");
+const ${model_name}Schema    = require("../../schemas/${app_id}/${pascalToSnake(model_name)}");
 
-class ${schema.model_name}DeltaMigration {
+class ${model_name}DeltaMigration {
     constructor() {
         this.metadata = {
             columns: ${JSON.stringify(added_cols)},
             indexes: ${JSON.stringify(added_indx)},
             timestamp: "${new Date().toISOString()}",
-            schema: "${schema.model_name}"
+            schema: "${model_name}"
         };
 
-        this.connector          = DatasourceRegistry.getInstance().getDataSource('${schema.datasource}');
-        this.builder            = getQueryBuilder('${schema.datasource}');
+        this.connector          = DatasourceRegistry.getInstance().getDataSource(${model_name}Schema?.datasource_type);
+        this.builder            = getQueryBuilder(${model_name}Schema?.datasource_type);
         this.added_cols         = ${JSON.stringify(added_cols)};
         this.removed_cols       = ${JSON.stringify(removed_cols)};
         this.added_indx         = ${JSON.stringify(added_indx)};
         this.removed_indx       = ${JSON.stringify(removed_indx)};
-        this.all_cols           = Object.keys(${schema.model_name}Schema.columns);
-        this.all_indexes        = ${schema.model_name}Schema.indexes || [];
+        this.all_cols           = Object.keys(${model_name}Schema.columns);
+        this.all_indexes        = ${model_name}Schema.indexes || [];
     }
 
     async addColumns(cols) {
@@ -118,8 +118,8 @@ class ${schema.model_name}DeltaMigration {
             const after_col_index   = this.all_cols.indexOf(new_column);
             const after_col         = this.all_cols[after_col_index - 1] || null;
             const position_obj      = { after: after_col };
-            const col_def           = ${schema.model_name}Schema.columns[new_column];
-            const query             = this.builder.addColumn('${schema.table_name}', new_column, col_def, position_obj);
+            const col_def           = ${model_name}Schema.columns[new_column];
+            const query             = this.builder.addColumn(${model_name}Schema?.table_name, new_column, col_def, position_obj);
 
             await this.connector.executeQuery(query);
         }
@@ -127,7 +127,7 @@ class ${schema.model_name}DeltaMigration {
 
     async dropColumns(cols) {
         for (const col of cols) {
-            const query = this.builder.dropColumn('${schema.table_name}', col);
+            const query = this.builder.dropColumn(${model_name}Schema?.table_name, col);
             await this.connector.executeQuery(query);
         }
     }
@@ -138,14 +138,14 @@ class ${schema.model_name}DeltaMigration {
 
             if (!index_obj) { continue; }
 
-            const query = this.builder.createIndex('${schema.table_name}', index_obj.fields, true);
+            const query = this.builder.createIndex(${model_name}Schema?.table_name, index_obj.fields, true);
             await this.connector.executeQuery(query);
         }
     }
 
     async dropIndexes(indxs) {
         for (const index_name of indxs) {
-            const query = this.builder.dropIndex('${schema.table_name}', index_name);
+            const query = this.builder.dropIndex(${model_name}Schema?.table_name, index_name);
             await this.connector.executeQuery(query);
         }
     }
@@ -173,7 +173,7 @@ class ${schema.model_name}DeltaMigration {
     }
 }
 
-module.exports = new ${schema.model_name}DeltaMigration();
+module.exports = new ${model_name}DeltaMigration();
 `;
 };
 

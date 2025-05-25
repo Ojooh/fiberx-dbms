@@ -10,6 +10,7 @@ const DatasourceRegistry            = require("./datasource_connectors/datasourc
 
 const ModelAndSchemaLoaderScript    = require("./scripts/model_and_schema_loader_script");
 const SchemaBuilderScript           = require("./scripts/schema_builder_script");
+const MigrationBuilderScript        = require("./scripts/migration_builder_script");
 
 class FiberXDBMS {
     constructor(app_id, public_key, fibase_base_url = null, logger = null) {
@@ -117,6 +118,26 @@ class FiberXDBMS {
         catch (error) {
            const params = { error };
            this.logger.error(`Error in ${this.name} - getSchemaCodeContent method`, params);
+           return false;
+        }
+    }
+
+    // Static Method to return schema code content
+    static generateMigrationCodeContent = (migration_input, delta = false, logger = null) => {
+        try {
+            const migration_builder    = new MigrationBuilderScript(logger);
+            
+            if(delta) {
+                return migration_builder.generateDeltaMigrationCode(migration_input)
+            }
+            else {
+                return migration_builder.generateInitialMigrationCode(migration_input)
+            }
+
+        }
+        catch (error) {
+           const params = { error };
+           this.logger.error(`Error in ${this.name} - generateMigrationCodeContent method`, params);
            return false;
         }
     }
