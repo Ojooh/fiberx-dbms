@@ -42,8 +42,8 @@ const initialMigrationCodeTemplate = (values) => {
     const { app_id, model_name, column_names, index_names } = values;
     return `
 
-const DatasourceRegistry            = require("../../datasource_connectors/datasource_registry");
-const getQueryBuilder               = require("../../query_builders/query_builder_resolver");
+const DatasourceRegistry            = require("fiberx-dbms/datasource_connectors/datasource_registry");
+const getQueryBuilder               = require("fiberx-dbms/query_builders/query_builder_resolver");
 const ${model_name}Schema    = require("../../schemas/${app_id}/${pascalToSnake(model_name)}");
 
 class ${model_name}InitialMigration {
@@ -90,8 +90,8 @@ const deltaMigrationCodeTemplate = (values) => {
 
     return `
 
-const DatasourceRegistry            = require("../../datasource_connectors/datasource_registry");
-const getQueryBuilder               = require("../../query_builders/query_builder_resolver");
+const DatasourceRegistry            = require("fiberx-dbms/datasource_connectors/datasource_registry");
+const getQueryBuilder               = require("fiberx-dbms/query_builders/query_builder_resolver");
 const ${model_name}Schema    = require("../../schemas/${app_id}/${pascalToSnake(model_name)}");
 
 class ${model_name}DeltaMigration {
