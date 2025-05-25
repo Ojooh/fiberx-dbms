@@ -82,32 +82,35 @@ class FiberXDBMS {
     }
 
     // Method to initialize DBMS
-    initializeDBMS = async (manaual_schema_urls = []) => {
+    initializeDBMS = async (db_configs = {}) => {
         try {
             const is_central_app = this.#isCentralApp(this.app_id, this.public_key);
 
-            if(is_central_app) { this.fibase_client.storeAPIResponseData(manaual_schema_urls); }
+            if(is_central_app) { this.fibase_client.storeAPIResponseData(db_configs); }
 
             else { await this.fibase_client.sendHandShake(); }
 
-            if (this.fibase_client.assertHandshakeComplete()) {
-                this.logger.log(`Handshake complete for app_id: ${this.app_id}`);
-
-                this.logger.log(`Registering data source connectors...`);
-                await this.#registerDataSourceCoonectors();
-                this.logger.log(`Data source connectors registered successfully.`);
-
-
-                this.logger.log(`Fetching schema and migration files...`);
-                await this.schema_fetcher.run();
-                this.logger.log(`Schema and migration files fetched successfully.`);
-
-                return true
-            }
-            else {
+            if (!this.fibase_client.assertHandshakeComplete()) {
                 this.logger.error(`Handshake failed for app_id: ${this.app_id} is_central_app: ${is_central_app}`);
                 return false;
             }
+
+
+            const { set_up = true, } = db_configs
+            this.logger.log(`Handshake complete for app_id: ${this.app_id}`);
+
+            this.logger.log(`Registering data source connectors...`);
+            await this.#registerDataSourceCoonectors();
+            this.logger.log(`Data source connectors registered successfully.`);
+
+            if(!set_up) { return true }
+
+            this.logger.log(`Fetching schema and migration files...`);
+            await this.schema_fetcher.run();
+            this.logger.log(`Schema and migration files fetched successfully.`);
+
+            return true
+
         }
         catch (error) {
            const params = { error };
