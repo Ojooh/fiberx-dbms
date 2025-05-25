@@ -123,7 +123,7 @@ class PostgresDatasourceConnector {
             const values            = options?.values || [];
             const connection        = options?.transaction || this.pool;
 
-            this.logger.info(`Executing query`, { query, options });
+            this.logger.info(`Executing query ${query} [OPTIONS] ${options}`);
 
             const result = await connection.query(query, values)
 

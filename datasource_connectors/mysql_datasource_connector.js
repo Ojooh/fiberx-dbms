@@ -92,7 +92,7 @@ class MysqlDatasourceConnector {
             if (!this.pool) throw new Error("Database pool not established");
 
             const { params = [], transaction } = options;
-            this.logger.info(`Executing query`, { query, options });
+            this.logger.info(`Executing query ${query} [OPTIONS] ${options}`);
 
             const connection = transaction || this.pool;
             const [rows] = await connection.execute(query, params);
