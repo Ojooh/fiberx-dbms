@@ -138,7 +138,6 @@ class ModelAndSchemaLoaderScript {
 
             this.logger.log("Cleaning directories...");
             this.#clearDirectory(this.schemas_dir);
-            this.#clearDirectory(this.migrations_dir);
 
             this.logger.log("Fetching schema files...");
             const schema_files      = this.global_vars.getVariable("SCHEMA_FILES") || [];

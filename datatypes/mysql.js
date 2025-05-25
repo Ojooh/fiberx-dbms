@@ -3,7 +3,7 @@ const mapToMySQLType = (data_type) => {
   switch (data_type.type) {
     case 'STRING': return `VARCHAR(${data_type.length})`;
 
-    case 'TEXT': return `${data_type.variant.toUpperCase()}TEXT`;
+    case 'TEXT': return `${(data_type?.variant || "LONG").toUpperCase() }TEXT`;
 
     case 'INTEGER': return 'INT';
 
@@ -15,15 +15,15 @@ const mapToMySQLType = (data_type) => {
 
     case 'FLOAT': return 'FLOAT';
 
-    case 'DECIMAL': return `DECIMAL(${data_type.precision}, ${data_type.scale})`;
+    case 'DECIMAL': return `DECIMAL(${data_type?.precision}, ${data_type?.scale})`;
 
     case 'JSON': return 'JSON';
 
-    case 'ENUM': return `ENUM(${(data_type.values).map((v) => `'${v}'`).join(', ')})`;
+    case 'ENUM': return `ENUM(${(data_type?.values).map((v) => `'${v}'`).join(', ')})`;
 
     case 'UUID': return 'CHAR(36)';
     
-    default: throw new Error(`Unsupported MySQL type: ${data_type.type}`);
+    default: throw new Error(`Unsupported MySQL type: ${data_type?.type}`);
   }
 }
 
