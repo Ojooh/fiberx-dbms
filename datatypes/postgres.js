@@ -10,7 +10,9 @@ const mapToPostgresType = (data_type) => {
 
       case 'BOOLEAN': return 'BOOLEAN';
 
-      case 'DATE': return 'TIMESTAMP';
+      case 'DATE': return 'DATE';
+
+      case 'DATETIME': return 'TIMESTAMP';
 
       case 'FLOAT': return 'REAL';
 

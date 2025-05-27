@@ -68,7 +68,7 @@ class ${model_name}InitialMigration {
         const indexes = ${model_name}Schema.indexes;
 
         for (const index_obj of indexes) {
-            const create_index_query = this.builder.createIndex(${model_name}Schema.table_name, index_obj.fields, true);
+            const create_index_query = this.builder.createIndex(${model_name}Schema.table_name, index_obj.fields, index_obj?.unique);
             await this.connector.executeQuery(create_index_query);
         }
     }
@@ -135,7 +135,7 @@ class ${model_name}DeltaMigration {
 
             if (!index_obj) { continue; }
 
-            const query = this.builder.createIndex(${model_name}Schema?.table_name, index_obj.fields, true);
+            const query = this.builder.createIndex(${model_name}Schema?.table_name, index_obj.fields, index_obj?.unique);
             await this.connector.executeQuery(query);
         }
     }

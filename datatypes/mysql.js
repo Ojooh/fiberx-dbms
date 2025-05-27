@@ -11,7 +11,9 @@ const mapToMySQLType = (data_type) => {
 
     case 'BOOLEAN': return 'TINYINT(1)';
 
-    case 'DATE': return 'DATETIME';
+    case 'DATE': return 'DATE';
+
+    case 'DATETIME': return 'DATETIME';
 
     case 'FLOAT': return 'FLOAT';
 

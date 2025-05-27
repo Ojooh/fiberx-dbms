@@ -12,6 +12,8 @@ const DataTypes = {
 
     DATE: () => ({ type: 'DATE' }),
 
+    DATETIME: () => ({ type: 'DATETIME' }),
+
     FLOAT: () => ({ type: 'FLOAT' }),
 
     DECIMAL: (precision = 10, scale = 2) => ({ type: 'DECIMAL', precision, scale }),
