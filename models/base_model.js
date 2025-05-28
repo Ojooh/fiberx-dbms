@@ -188,7 +188,15 @@ class BaseModel {
             const connector     = this.#getConnector()
             const query         = qb.insert(this.schema.table_name, data, options);
             const result        = await connector.executeQuery(query, options);
-            const new_instance  = result ? new this.constructor({ ...data, ...result, schema: this.schema }) : null
+            const insert_id     = result?.insertId;
+            let full_row        = data;
+            if (insert_id) {
+                const fetch_query = `SELECT * FROM ${this.schema.table_name} WHERE id = ? LIMIT 1`;
+                const [row] = await connector.executeQuery(fetch_query, { params: [insert_id] });
+                full_row = row || data;
+            }
+
+            const new_instance  = result ? new this.constructor({ ...result, ...full_row, schema: this.schema }) : null
 
             this.#triggerHook('after_create', new_instance, options);
             return new_instance;
@@ -242,6 +250,48 @@ class BaseModel {
             return true;
         } catch (err) {
             console.error("update error:", err);
+            throw err;
+        }
+    }
+
+    increment = async (field, where = null, amount = 1, options = {}) => {
+        try {
+            this.#validatePermission('update', this.schema.model_name);
+            this.#triggerHook('before_increment', { field, amount }, options);
+
+            const qb            = this.#getQueryBuilder();
+            const connector     = this.#getConnector();
+            const pk_field      = this.schema.primary_key?.toString() || 'id';
+            const final_where   = where || { [pk_field]: this[pk_field] };
+
+            const query         = qb.increment(this.schema.table_name, final_where, field, amount);
+            const result        = await connector.executeQuery(query, options);
+
+            this.#triggerHook('after_increment', { field, amount }, options);
+            return true;
+        } catch (err) {
+            console.error("increment error:", err);
+            throw err;
+        }
+    }
+
+    decrement = async (field, where = null, amount = 1,  options = {}) => {
+        try {
+            this.#validatePermission('update', this.schema.model_name);
+            this.#triggerHook('before_decrement', { field, amount }, options);
+
+            const qb            = this.#getQueryBuilder();
+            const connector     = this.#getConnector();
+            const pk_field      = this.schema.primary_key?.toString() || 'id';
+            const final_where   = where || { [pk_field]: this[pk_field] };
+
+            const query         = qb.decrement(this.schema.table_name, final_where, field, amount);
+            const result        = await connector.executeQuery(query, options);
+
+            this.#triggerHook('after_decrement', { field, amount }, options);
+            return true;
+        } catch (err) {
+            console.error("decrement error:", err);
             throw err;
         }
     }

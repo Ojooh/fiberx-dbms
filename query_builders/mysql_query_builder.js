@@ -7,30 +7,39 @@ class MysqlQueryBuilder {
         this.query_util = new QueryUtil();
     }
 
-
     // Method to parse where conditions
     #parse_condition = (obj) => {
-        if (Array.isArray(obj)) { return obj.map(this.#parse_condition).join(' AND '); }
-    
-        if (typeof obj === 'object' && obj !== null) {
-            return Object.keys(obj).map(key => {
-                if (key === 'OR' || key === 'AND') {
-                    const sub = obj[key].map(this.#parse_condition).join(` ${key} `);
-                    return `(${sub})`;
-                }
-                
-                const value = obj[key];
-                if (typeof value === 'object' && value !== null) {
-                    const operator  = Object.keys(value)[0].toUpperCase();
-                    const operand   = value[operator];
-                    return this.query_util.formatWhereCondition(key, operator, operand);
-                }
-                else { return `${this.query_util.escapeField(key)} = ${this.query_util.escapeValue(value)}`; }
-            }).join(' AND ');
+        if (typeof obj !== 'object' || obj === null) {
+            throw new Error('Invalid where clause format');
         }
-    
-        throw new Error('Invalid where clause format');
-    };
+
+        if (Array.isArray(obj)) {
+            // This shouldn't happen at root level anymore
+            throw new Error('Invalid root-level array in where clause');
+        }
+
+        return Object.keys(obj).map(key => {
+            if (key === 'OR' || key === 'AND') {
+                const conditions = obj[key];
+
+                if (!Array.isArray(conditions)) {
+                    throw new Error(`${key} must be an array`);
+                }
+
+                const parsed = conditions.map(cond => `(${this.#parse_condition(cond)})`).join(` ${key} `);
+                return `(${parsed})`;
+            }
+
+            const value = obj[key];
+            if (typeof value === 'object' && value !== null) {
+                const operator  = Object.keys(value)[0].toUpperCase();
+                const operand   = value[operator];
+                return this.query_util.formatWhereCondition(key, operator, operand);
+            } else {
+                return `${this.query_util.escapeField(key)} = ${this.query_util.escapeValue(value)}`;
+            }
+        }).join(' AND ');
+    }
 
     // Method to format where cluase
     #formatWhereClause = (where = null) => {
@@ -45,13 +54,13 @@ class MysqlQueryBuilder {
     #formatOptions = (options = null) => {
         if (!options) { return ''; }
 
-        const { limit, offset, order, distinct, lock } = options;
+        const { limit, offset, order_by, distinct, lock } = options;
 
         let clause = '';
     
         if (distinct) { clause += ' DISTINCT'; }
 
-        if (order) { clause += ` ORDER BY ${Array.isArray(order) ? order.join(', ') : order}`;  }
+        if (order_by) { clause += ` ORDER BY ${Array.isArray(order_by) ? order_by.join(', ') : order_by}`;  }
 
         if (limit) clause += ` LIMIT ${limit}`;
 
@@ -86,51 +95,77 @@ class MysqlQueryBuilder {
     
         const left                  = assoc.type === 'belongsTo' ? `${alias}.${target_key}` : `${base_table}.${foreign_key}`;
         const right                 = assoc.type === 'belongsTo' ? `${base_table}.${foreign_key}` : `${alias}.${target_key}`;
-    
-        const fields                = (include.fields || ['*']).map(f => `\`${alias}\`.\`${f}\` AS \`${alias}.${f}\``);
-        const join                  = `${type} JOIN \`${target_table}\` AS \`${alias}\` ON ${left} = ${right}`;
-    
+
+        let join_condition          = `${left} = ${right}`;
+
+        // Add include.where if present
+        if (include?.where) {
+            const where_condition = this.#parse_condition(include?.where).replace(/^AND\s+/, '');
+            join_condition += ` AND (${where_condition})`;
+        }
+
+        const fields = (include.fields || ['*']).map(f => `\`${alias}\`.\`${f}\` AS \`${alias}.${f}\``);
+        const join = `${type} JOIN \`${target_table}\` AS \`${alias}\` ON ${join_condition}`;
+
         return { join, fields };
+    
     }
 
     // Method to builds subqueries for hasMany / belongsToMany
     #generateSubqueryField = (assoc, include, base_table) => {
-        const { model: target_model, foreignKey } = assoc;
-        const target_table      = target_model.prototype.schema.table_name;
-        const alias             = include.as || target_table;
-        const fields            = include.fields || ['*'];
-        const json_concat       = fields.map(f => `IFNULL(\`${alias}_sub\`.\`${f}\`, '')`).join(", ");
-    
+        if (include.include && include.include.length > 0) {
+            throw new Error(`Nested includes are not supported in subqueries (hasMany/belongsToMany) for alias "${include.as || assoc.model.prototype.schema.table_name}".`);
+        }
+
+        const { model: target_model, foreign_key } = assoc;
+        const target_table  = target_model.prototype.schema.table_name;
+        const alias         = include.as || target_table;
+        const fields        = include.fields || ['*'];
+         let where_clause    = `\`${alias}_sub\`.\`${foreign_key}\` = \`${base_table}\`.id`;
+
+        if (include?.where) {
+            const condition = this.#parse_condition(include.where);
+            where_clause += ` AND (${condition})`;
+        }
+
         const sub_query = `(
             SELECT JSON_ARRAYAGG(JSON_OBJECT(${fields.map(f => `'${f}', \`${f}\``).join(', ')}))
             FROM \`${target_table}\` AS \`${alias}_sub\`
-            WHERE \`${alias}_sub\`.\`${foreignKey}\` = \`${base_table}\`.id
+           WHERE ${where_clause}
         ) AS \`${alias}\``;
-    
+
         return sub_query;
     }
 
     // Method to builds complete SELECT, JOIN, and subquery field parts
-    #formatIncludes = (include = [], base_table) => {
+    #formatIncludes = (includes = [], base_table) => {
         let joins = [], extra_fields = [];
-    
-        for (const inc of include) {
+
+        for (const inc of includes) {
             const assoc = this.#resolveAssociation(inc, base_table);
-    
+
+            const alias = inc.as || assoc.model.prototype.schema.table_name;
+
+            let nested = { joins: [], fields: [] };
+            if (inc.include && inc.include.length > 0) {
+                nested = this.#formatIncludes(inc.include, alias);
+            }
+
             if (['hasOne', 'belongsTo'].includes(assoc.type)) {
                 const { join, fields } = this.#generateJoin(assoc, inc, base_table);
-                joins.push(join);
-                extra_fields.push(...fields);
+                joins.push(join, ...nested.joins);
+                extra_fields.push(...fields, ...nested.fields);
             } else if (['hasMany', 'belongsToMany'].includes(assoc.type)) {
                 const sub = this.#generateSubqueryField(assoc, inc, base_table);
-                extra_fields.push(sub);
+                extra_fields.push(sub); // no nested fields in subqueries for now
             } else {
                 throw new Error(`Unsupported association type: ${assoc.type}`);
             }
         }
-    
+
         return { joins, fields: extra_fields };
-    }
+    };
+
 
     // Method to format column defeintion
     #formatColumnDefinition = (col, options) => {
@@ -211,6 +246,19 @@ class MysqlQueryBuilder {
         const set_clause = Object.entries(data).map(([k, v]) => `${this.query_util.escapeField(k)} = ${this.query_util.escapeValue(v)}`).join(', ');
         return `UPDATE ${this.query_util.escapeField(table_name)} SET ${set_clause} ${this.#formatWhereClause(where)}`.trim();
     }
+
+    increment = (table_name, where, field, amount = 1) => {
+        const escaped_field     = this.query_util.escapeField(field);
+        const set_clause        = `${escaped_field} = ${escaped_field} + ${this.query_util.escapeValue(amount)}`;
+        return `UPDATE ${this.query_util.escapeField(table_name)} SET ${set_clause} ${this.#formatWhereClause(where)}`.trim();
+    }
+
+    decrement = (table_name, where, field, amount = 1) => {
+        const escaped_field     = this.query_util.escapeField(field);
+        const set_clause        = `${escaped_field} = ${escaped_field} - ${this.query_util.escapeValue(amount)}`;
+        return `UPDATE ${this.query_util.escapeField(table_name)} SET ${set_clause} ${this.#formatWhereClause(where)}`.trim();
+    }
+
     
     // Method to get delete record query
     delete = (table_name, where) => { return `DELETE FROM ${this.query_util.escapeField(table_name)} ${this.#formatWhereClause(where)}`.trim(); }
