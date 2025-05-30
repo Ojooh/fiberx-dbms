@@ -222,10 +222,10 @@ class BaseModel {
             const connector     = this.#getConnector()
             const query         = qb.bulkInsert(this.schema, final_data, options);
             const result        = await connector.executeQuery(query);
-            const new_instance  = result ? final_data.map(row => { return new this.constructor({ ...row, schema: this.schema })}) : null
+            const new_instances  = result ? final_data.map(row => { return new this.constructor({ ...row, schema: this.schema })}) : null
 
-            this.#triggerHook('after_bulk_create', new_instance, options);
-            return new_instance;
+            this.#triggerHook('after_bulk_create', new_instances, options);
+            return new_instances;
         } catch (err) {
             console.error("create error:", err);
             throw err;
