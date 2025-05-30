@@ -11,7 +11,7 @@ class BaseModel {
 
         Object.assign(this, data);
         this.schema = data?.schema;
-        this.datasource_id = data?.schema?.datasource;
+        this.datasource_type = data?.schema?.datasource_type;
 
         this.addComputedAttributes();
     }
@@ -20,26 +20,25 @@ class BaseModel {
     #getAssociations = () => { return this.associations || []; }
 
     // Get registered data source connection
-    #getConnector = () => { return DatasourceRegistry.getInstance().getDataSource(this.datasource_id); }
+    #getConnector = () => { return DatasourceRegistry.getInstance().getDataSource(this.datasource_type); }
 
     // Get query builder for data source
-    #getQueryBuilder = () => { return getQueryBuilder(this.datasource_id); }
+    #getQueryBuilder = () => { return getQueryBuilder(this.datasource_type); }
 
     // Trigger an event in the current model
     #triggerHook = (hook, data, options) => { this.event_system.emit(hook, data, options); }
 
     // method to validate db permission
     #validatePermission = (action, model_name) => {
+        const { app_id, model_name: schema_model_name } = this.schema;
+
         const global_vars       = GlobalVariableManager.getInstance();
-        const app_id            = global_vars?.getVariable("APP_ID") || null;
-        const permissions       = global_vars?.getVariable("MODEL_PERMISSIONS") || [];
-        const app_data          = permissions.find(app => app.id === app_id);
+        const schema_files      = global_vars?.getVariable("SCHEMA_FILES") || [];
+        const schema_obj        = schema_files.find((obj) => { return obj?.app_id === app_id && obj.model_name === schema_model_name });
+        const permissions       = schema_obj?.permissions || [];
 
-        if (!app_data) throw new Error(`App ${app_id} is not registered in MODEL_PERMISSIONS.`);
 
-        const model_perms       = app_data.models?.find(m => m.name === model_name);
-
-        if (!model_perms || !model_perms.permissions.includes(action)) {
+        if (!permissions || !permissions.includes(action)) {
             throw new Error(`Permission denied: ${action} not allowed on model ${model_name} for app ${app_id}.`);
         } 
         else { return true; }

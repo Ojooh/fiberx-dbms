@@ -1,4 +1,5 @@
 const { Pool, PoolClient }  =  require("pg");
+const { randomUUID } = require('crypto');
 
 class PostgresDatasourceConnector {
    constructor(options, logger = null) {
@@ -97,9 +98,9 @@ class PostgresDatasourceConnector {
     beginTransaction = async () => {
         if (!this.pool) { throw new Error("Database pool not established"); }
 
-
         const client = await this.pool.connect();
         await client.query('BEGIN');
+        client.transaction_id = randomUUID()();
         return client;
     }
 
@@ -120,10 +121,11 @@ class PostgresDatasourceConnector {
         try {
             if (!this.pool) { throw new Error("Database pool not established"); }
 
-            const values            = options?.values || [];
-            const connection        = options?.transaction || this.pool;
+            const { params = [], transaction }  = options;
+            const connection                    = transaction || this.pool;
+            const query_log_type                = transaction ? (transaction?.transaction_id) : "Default"
 
-            this.logger.info(`Executing query ${query} [OPTIONS] ${options}`);
+            this.logger.info(`Executing Query [${query_log_type}]:  ${query} [PARAMS] ${JSON.stringify(params)}`);
 
             const result = await connection.query(query, values)
 

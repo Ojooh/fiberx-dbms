@@ -1,4 +1,5 @@
 const { createPool, Pool, PoolConnection, createConnection } =  require("mysql2/promise");
+const { randomUUID } = require('crypto');
 
 class MysqlDatasourceConnector {
     constructor(options, logger = null) {
@@ -89,10 +90,12 @@ class MysqlDatasourceConnector {
     // Method to execute MYSQL QUERY
     executeQuery = async (query, options = {}) => {
         try {
-            if (!this.pool) throw new Error("Database pool not established");
+            if (!this.pool) { throw new Error("Database pool not established"); }
 
-            const { params = [], transaction } = options;
-            this.logger.info(`Executing query ${query} [OPTIONS] ${options}`);
+            const { params = [], transaction }  = options;
+            const query_log_type                = transaction ? (transaction?.transaction_id) : "Default"
+
+            this.logger.info(`Executing Query [${query_log_type}]:  ${query} [PARAMS] ${JSON.stringify(params)}`);
 
             const connection = transaction || this.pool;
             const [rows] = await connection.execute(query, params);
@@ -112,6 +115,8 @@ class MysqlDatasourceConnector {
 
         const connection = await this.pool.getConnection();
         await connection.beginTransaction();
+        connection.transaction_id = randomUUID()();
+
         return connection;
     }
 
