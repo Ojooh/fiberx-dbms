@@ -72,14 +72,15 @@ class MysqlQueryBuilder {
     }
 
     // method to gets association metadata 
-    #resolveAssociation = (include, base_table) => {
-        const associations = include.model.getAssociations?.() || [];
+    #resolveAssociation = (include, base_table, model_instance) => {
+        const associations          = model_instance.getAssociations?.() || [];
+        const include_table_name    = include?.model?.schema?.table_name;
+
         const match = associations.find(a => {
-            const src                   = a.source?.prototype?.schema?.table_name;
             const tgt                   = a.model?.prototype?.schema?.table_name;
-            const matches_table         = src === base_table || tgt === base_table;
-            const matches_alias_or_fk   = !include?.as || a?.as === include?.as || a?.foreign_key === include?.foreign_key;
-            return matches_table && matches_alias_or_fk;
+            const matches_table         = tgt === include_table_name;
+            const matches_alias         = include?.as && a?.as ? include.as === a.as : false;
+            return matches_table && matches_alias;
         });
     
         if (!match) throw new Error(`Association not found for ${base_table} in include.`);
@@ -90,7 +91,7 @@ class MysqlQueryBuilder {
     // method to build builds JOINs for hasOne / belongsTo
     #generateJoin = (assoc, include, base_table) => {
         const { model: target_model, foreign_key, target_key } = assoc;
-        const target_table          = target_model.prototype.schema.table_name;
+        const target_table          = target_model.schema.table_name;
         const alias                 = include.as || target_table;
         const required              = include.required !== false; // default to true
         const type                  = required ? 'INNER' : 'LEFT';
@@ -116,11 +117,11 @@ class MysqlQueryBuilder {
     // Method to builds subqueries for hasMany / belongsToMany
     #generateSubqueryField = (assoc, include, base_table) => {
         if (include.include && include.include.length > 0) {
-            throw new Error(`Nested includes are not supported in subqueries (hasMany/belongsToMany) for alias "${include.as || assoc.model.prototype.schema.table_name}".`);
+            throw new Error(`Nested includes are not supported in subqueries (hasMany/belongsToMany) for alias "${include.as || assoc.model.schema.table_name}".`);
         }
 
         const { model: target_model, foreign_key } = assoc;
-        const target_table  = target_model.prototype.schema.table_name;
+        const target_table  = target_model.schema.table_name;
         const alias         = include.as || target_table;
         const fields        = include.fields || ['*'];
          let where_clause    = `\`${alias}_sub\`.\`${foreign_key}\` = \`${base_table}\`.id`;
@@ -140,13 +141,13 @@ class MysqlQueryBuilder {
     }
 
     // Method to builds complete SELECT, JOIN, and subquery field parts
-    #formatIncludes = (includes = [], base_table) => {
+    #formatIncludes = (includes = [], base_table, model_instance) => {
         let joins = [], extra_fields = [];
 
         for (const inc of includes) {
-            const assoc = this.#resolveAssociation(inc, base_table);
+            const assoc = this.#resolveAssociation(inc, base_table, model_instance);
 
-            const alias = inc.as || assoc.model.prototype.schema.table_name;
+            const alias = inc.as || assoc.model.schema.table_name;
 
             let nested = { joins: [], fields: [] };
             if (inc.include && inc.include.length > 0) {
@@ -202,12 +203,12 @@ class MysqlQueryBuilder {
     }
 
     // method to get select record query
-    select = (table_name, fields, where = {}, options = {}) => {
+    select = (model_instance, table_name, fields, where = {}, options = {}) => {
         const { include = [] } = options;
     
         const base_fields = fields.map(f => `\`${table_name}\`.\`${f}\``);
     
-        const { joins, fields: include_fields } = this.#formatIncludes(include, table_name);
+        const { joins, fields: include_fields } = this.#formatIncludes(include, table_name, model_instance);
     
         const full_fields = [...base_fields, ...include_fields].join(', ');
         const join_clause = joins.join(' ');

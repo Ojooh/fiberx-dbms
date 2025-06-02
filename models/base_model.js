@@ -17,7 +17,7 @@ class BaseModel {
     }
 
     // method to get model associations
-    #getAssociations = () => { return this.associations || []; }
+    getAssociations = () => { return this.associations || []; }
 
     // Get registered data source connection
     #getConnector = () => { return DatasourceRegistry.getInstance().getDataSource(this.datasource_type); }
