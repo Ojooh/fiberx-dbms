@@ -68,15 +68,17 @@ class PostgresQueryBuilder {
 
     // method to gets association metadata 
     #resolveAssociation = (include, base_table) => {
-        const associations  = include.model.getAssociations?.() || [];
-        const match         = associations.find(a => {
-            const src = a.source?.prototype?.schema?.table_name;
-            const tgt = a.model?.prototype?.schema?.table_name;
-            return src === base_table || tgt === base_table;
+        const associations = include.model.getAssociations?.() || [];
+        const match = associations.find(a => {
+            const src                   = a.source?.prototype?.schema?.table_name;
+            const tgt                   = a.model?.prototype?.schema?.table_name;
+            const matches_table         = src === base_table || tgt === base_table;
+            const matches_alias_or_fk   = !include?.as || a?.as === include?.as || a?.foreign_key === include?.foreign_key;
+            return matches_table && matches_alias_or_fk;
         });
-
+    
         if (!match) throw new Error(`Association not found for ${base_table} in include.`);
-
+    
         return match;
     }
 
