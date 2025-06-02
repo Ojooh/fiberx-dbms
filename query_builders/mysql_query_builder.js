@@ -75,9 +75,11 @@ class MysqlQueryBuilder {
     #resolveAssociation = (include, base_table) => {
         const associations = include.model.getAssociations?.() || [];
         const match = associations.find(a => {
-            const src = a.source?.prototype?.schema?.table_name;
-            const tgt = a.model?.prototype?.schema?.table_name;
-            return src === base_table || tgt === base_table;
+            const src                   = a.source?.prototype?.schema?.table_name;
+            const tgt                   = a.model?.prototype?.schema?.table_name;
+            const matches_table         = src === base_table || tgt === base_table;
+            const matches_alias_or_fk   = !include?.as || a?.as === include?.as || a?.foreign_key === include?.foreign_key;
+            return matches_table && matches_alias_or_fk;
         });
     
         if (!match) throw new Error(`Association not found for ${base_table} in include.`);
@@ -236,10 +238,24 @@ class MysqlQueryBuilder {
     // Method to get bulk insert record queries
     bulkInsert = (table_schema, values) => {
         const { table_name, columns } = table_schema;
-        const cols = Object.keys(columns).map(this.query_util.escapeField).join(', ');
-        const vals = values.map(row => `(${row.map(v => this.query_util.escapeValue(v)).join(', ')})`).join(', ');
+
+        if (!Array.isArray(values) || values.length === 0) { throw new Error("No values provided for bulk insert"); }
+
+        // Determine which columns are actually present in the data
+        const first_row     = values[0];
+        const data_columns = Object.keys(first_row).filter(key => key in columns);
+        const cols          = data_columns.map(this.query_util.escapeField).join(', ');
+
+        // Generate value tuples
+        const vals = values.map(row => {
+            const row_values = data_columns.map(col => this.query_util.escapeValue(row[col]));
+            return `(${row_values.join(', ')})`;
+        }).join(', ');
+
+        // Final query
         return `INSERT INTO ${this.query_util.escapeField(table_name)} (${cols}) VALUES ${vals}`;
-    }
+    };
+
 
     // Method to get update a record query
     update = (table_name, where, data) => {

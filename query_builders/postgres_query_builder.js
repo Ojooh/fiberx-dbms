@@ -220,10 +220,24 @@ class PostgresQueryBuilder {
     // Method to get bulk insert record queries
     bulkInsert = (table_schema, values) => {
         const { table_name, columns } = table_schema;
-        const cols = Object.keys(columns).map(this.query_util.escapeField).join(', ');
-        const vals = values.map(row => `(${row.map(v => this.query_util.escapeValue(v)).join(', ')})`).join(', ');
-        return `INSERT INTO "${table_name}" (${cols}) VALUES ${vals}`;
-    }
+
+        if (!Array.isArray(values) || values.length === 0) { throw new Error("No values provided for bulk insert"); }
+
+        // Determine which columns are actually present in the data
+        const first_row     = values[0];
+        const data_columns = Object.keys(first_row).filter(key => key in columns);
+        const cols          = data_columns.map(this.query_util.escapeField).join(', ');
+
+        // Generate value tuples
+        const vals = values.map(row => {
+            const row_values = data_columns.map(col => this.query_util.escapeValue(row[col]));
+            return `(${row_values.join(', ')})`;
+        }).join(', ');
+
+        // Final query
+        return `INSERT INTO ${this.query_util.escapeField(table_name)} (${cols}) VALUES ${vals}`;
+    };
+
 
     // Method to get update a record query
     update = (table_name, where, data) => {

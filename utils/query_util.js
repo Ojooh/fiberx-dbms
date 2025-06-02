@@ -18,19 +18,19 @@ class QueryUtil {
     // method to format where condtions
     formatWhereCondition(key, operator, operand) {
         switch (operator) {
-          case 'IN':
-            return `${this.escapeField(key)} IN (${operand.map(v => this.escapeValue(v)).join(', ')})`;
-          case 'LIKE':
-            return `${this.escapeField(key)} LIKE ${this.escapeValue(operand)}`;
-          case '=':
-          case '>':
-          case '<':
-          case '>=':
-          case '<=':
-          case '!=':
-            return `${this.escapeField(key)} ${operator} ${this.escapeValue(operand)}`;
-          default:
-            throw new Error(`Unsupported operator: ${operator}`);
+			case 'IN':
+				return `${this.escapeField(key)} IN (${operand.map(v => this.escapeValue(v)).join(', ')})`;
+			case 'LIKE':
+				return `${this.escapeField(key)} LIKE ${this.escapeValue(operand)}`;
+			case '=':
+			case '>':
+			case '<':
+			case '>=':
+			case '<=':
+			case '!=':
+				return `${this.escapeField(key)} ${operator} ${this.escapeValue(operand)}`;
+			default:
+				throw new Error(`Unsupported operator: ${operator}`);
         }
     }
 }
