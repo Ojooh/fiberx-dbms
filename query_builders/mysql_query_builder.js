@@ -219,10 +219,10 @@ class MysqlQueryBuilder {
     }
 
     // Method to get select  count record query
-    selectCount = (table_name, where = {}, options = {}) => {
+    selectCount = (model_instance, table_name, where = {}, options = {}) => {
         const { include = [] } = options;
 
-        const { joins, fields: include_fields } = this.#formatIncludes(include, table_name);
+        const { joins, fields: include_fields } = this.#formatIncludes(include, table_name, model_instance);
 
         const join_clause = joins.join(' ');
 

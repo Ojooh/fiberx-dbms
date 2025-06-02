@@ -96,7 +96,7 @@ class BaseModel {
             const where             = { [pk_field]: id };
             const qb                = this.#getQueryBuilder();
             const connector         = this.#getConnector()
-            const query             = qb.select(this.schema.table_name, fields, where, { ...options, limit: 1 });
+            const query             = qb.select(this, this.schema.table_name, fields, where, { ...options, limit: 1 });
             const results           = await connector.executeQuery(query, options);
 
             return results?.[0] ? new this.constructor({ ...results[0], schema: this.schema }) : null;
@@ -112,7 +112,7 @@ class BaseModel {
 
             const qb            = this.#getQueryBuilder();
             const connector     = this.#getConnector()
-            const query         = qb.selectCount(this.schema.table_name, where, options);
+            const query         = qb.selectCount(this, this.schema.table_name, where, options);
             const result        = await connector.executeQuery(query, options);
 
             return result?.[0]?.count || 0;
@@ -128,7 +128,7 @@ class BaseModel {
 
             const qb            = this.#getQueryBuilder();
             const connector     = this.#getConnector()
-            const query         = qb.select(this.schema.table_name, fields, where, { ...options, limit: 1 });
+            const query         = qb.select(this, this.schema.table_name, fields, where, { ...options, limit: 1 });
             const results       = await connector.executeQuery(query, options);
 
             return results?.[0] ? new this.constructor({ ...results[0], schema: this.schema }) : null;
@@ -144,7 +144,7 @@ class BaseModel {
 
             const qb            = this.#getQueryBuilder();
             const connector     = this.#getConnector()
-            const query         = qb.select(this.schema.table_name, fields, where, options);
+            const query         = qb.select(this, this.schema.table_name, fields, where, options);
             const results       = await connector.executeQuery(query, options);
 
             return results.map(row => { return new this.constructor({ ...row, schema: this.schema })});
@@ -160,8 +160,8 @@ class BaseModel {
 
             const qb                = this.#getQueryBuilder();
             const connector         = this.#getConnector()
-            const count_query       = qb.selectCount(this.schema.table_name, where);
-            const data_query        = qb.select(this.schema.table_name, fields, where, options);
+            const count_query       = qb.selectCount(this, this.schema.table_name, where);
+            const data_query        = qb.select(this, this.schema.table_name, fields, where, options);
 
             const [countResult, rows_result] = await Promise.all([
                 connector.executeQuery(count_query, options),
