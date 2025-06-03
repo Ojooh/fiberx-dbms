@@ -61,9 +61,15 @@ class ${model_name}InitialMigration {
     }
 
     async up() {
-        const create_table_query = this.builder.createTable(${model_name}Schema);
+        const { create_sql, trigger_sqls }  = this.builder.createTable(${model_name}Schema);
 
-        await this.connector.executeQuery(create_table_query);
+        await this.connector.executeQuery(create);
+
+        if (trigger_sqls && Array.isArray(trigger_sqls)) {
+            for (const trigger_sql of trigger_sqls) {
+                await this.connector.executeQuery(trigger_sql);
+            }
+        }
 
         const indexes = ${model_name}Schema.indexes;
 
@@ -112,13 +118,17 @@ class ${model_name}DeltaMigration {
 
     async addColumns(cols) {
         for (const new_column of cols) {
-            const after_col_index   = this.all_cols.indexOf(new_column);
-            const after_col         = this.all_cols[after_col_index - 1] || null;
-            const position_obj      = { after: after_col };
-            const col_def           = ${model_name}Schema.columns[new_column];
-            const query             = this.builder.addColumn(${model_name}Schema?.table_name, new_column, col_def, position_obj);
+            const after_col_index               = this.all_cols.indexOf(new_column);
+            const after_col                     = this.all_cols[after_col_index - 1] || null;
+            const position_obj                  = { after: after_col };
+            const col_def                       = ${model_name}Schema.columns[new_column];
+            const { alter_sql, trigger_sqls }    = this.builder.addColumn(${model_name}Schema?.table_name, new_column, col_def, position_obj);
 
-            await this.connector.executeQuery(query);
+            await this.connector.executeQuery(alter_sql);
+
+            for (const trigger_sql of trigger_sql) {
+                await this.connector.executeQuery(trigger_sqls);
+            }
         }
     }
 

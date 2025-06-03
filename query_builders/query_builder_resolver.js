@@ -4,13 +4,13 @@ const PostgresQueryBuilder  =  require("./postgres_query_builder");
 const MongoQueryBuilder     =  require("./mongo_query_builder");
 
 const queryBuilderMap = {
-    mysql_db: new MysqlQueryBuilder(),
-    postgresql_db: new PostgresQueryBuilder(),
-    mongo_db: new MongoQueryBuilder()
+    mysql_db: MysqlQueryBuilder,
+    postgresql_db: PostgresQueryBuilder,
+    mongo_db: MongoQueryBuilder
 };
 
-const getQueryBuilder = (datasource_type) => {
-    const builder = queryBuilderMap[datasource_type];
+const getQueryBuilder = (datasource_type, model_instance = null, logger_instance = null) => {
+    const builder = new queryBuilderMap[datasource_type](model_instance, logger_instance);
 
     if (!builder) { throw new Error(`No query builder for ${datasource_type}`); }
     

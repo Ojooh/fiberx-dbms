@@ -23,7 +23,7 @@ class BaseModel {
     #getConnector = () => { return DatasourceRegistry.getInstance().getDataSource(this.datasource_type); }
 
     // Get query builder for data source
-    #getQueryBuilder = () => { return getQueryBuilder(this.datasource_type); }
+    #getQueryBuilder = () => { return getQueryBuilder(this.datasource_type, this); }
 
     // Trigger an event in the current model
     #triggerHook = (hook, data, options) => { this.event_system.emit(hook, data, options); }
