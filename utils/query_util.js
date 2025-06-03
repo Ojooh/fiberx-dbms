@@ -65,7 +65,7 @@ class QueryUtil {
                 const { join, fields } = this.#generateJoin(base_table, association, include_obj);
 
                 joins.push(join, ...nested?.joins);
-                extra_fields.push(...fields, ...nested?.fields);
+                extra_fields.push(fields, nested?.fields);
             } 
             else if (['hasMany', 'belongsToMany'].includes(association?.type)) {
                 const sub = this.#generateSubqueryField(base_table, association, include_obj);
@@ -214,22 +214,22 @@ class QueryUtil {
         return `(${parsed})`;
     }
 
-    #formatWhereCondition = (key, operator, operand) => {
+    #formatWhereCondition = (qualified_key, operator, operand) => {
         const op = operator.toUpperCase();
 
         switch (op) {
             case 'IN':
-                return `${this.escapeField(key)} IN ${this.escapeValue(operand)}`;
+                return `${qualified_key} IN ${this.escapeValue(operand)}`;
             case 'LIKE':
                 const like_operator = this.dialect === 'postgres' ? 'ILIKE' : 'LIKE';
-                return `${this.escapeField(key)} ${like_operator} ${this.escapeValue(operand)}`;
+                return `${qualified_key} ${like_operator} ${this.escapeValue(operand)}`;
             case '=':
             case '>':
             case '<':
             case '>=':
             case '<=':
             case '!=':
-                return `${this.escapeField(key)} ${op} ${this.escapeValue(operand)}`;
+                return `${qualified_key} ${op} ${this.escapeValue(operand)}`;
             default:
                 throw new Error(`Unsupported operator: ${op}`);
         }
@@ -248,11 +248,12 @@ class QueryUtil {
         return Object.keys(where_obj).map(
             (key) => {
                 const value             = where_obj[key];
-                const qualified_field   = this.escapeField(`${table_name}.${key}`);
 
                 if (key === 'OR' || key === 'AND') {
                     return this.#handleNestedORANDCondition(table_name, key, where_obj);
                 }
+
+                const qualified_field = `${this.escapeField(table_name)}.${this.escapeField(key)}`;
 
                 if (typeof value === 'object' && value !== null) {
                     const operator  = Object.keys(value)[0].toUpperCase();
@@ -267,6 +268,11 @@ class QueryUtil {
         ).join(' AND ');
     }
 
+    #escapeQualifiedField = (qualified) => {
+        const [table, column] = qualified.split('.');
+        return `${this.escapeField(table)}.${this.escapeField(column)}`;
+    };
+
     // method to build builds JOINs for hasOne / belongsTo
     #generateJoin = (base_table, association, include) => {
         const { model: target_model, foreign_key, target_key } = association;
@@ -275,8 +281,8 @@ class QueryUtil {
         const alias                 = include?.as || target_table;
         const required              = include.required !== false; 
         const type                  = required ? 'INNER' : 'LEFT';
-        const left                  = this.escapeField( association.type === 'belongsTo' ? `${alias}.${target_key}` : `${base_table}.${foreign_key}`);
-        const right                 = this.escapeField( association.type === 'belongsTo' ? `${base_table}.${foreign_key}` : `${alias}.${target_key}`);
+        const left                  = this.#escapeQualifiedField( association.type === 'belongsTo' ? `${alias}.${target_key}` : `${base_table}.${foreign_key}`);
+        const right                 = this.#escapeQualifiedField( association.type === 'belongsTo' ? `${base_table}.${foreign_key}` : `${alias}.${target_key}`);
         let where_clause            = `${left} = ${right}`;
 
         // Add include.where if present
@@ -306,7 +312,7 @@ class QueryUtil {
         const all_fields            = Object.keys(target_model?.schema?.columns);
         const resolved_fields       = include?.fields?.length && include?.fields?.includes('*') ? all_fields : include?.fields;
         const field_mappings        = this.formatSelectFields(alias, resolved_fields);
-        let where_clause            = `${this.escapeField(`${alias}.${foreign_key}`)} = ${this.escapeField(`${base_table}.id`)}`;
+        let where_clause            = `${this.#escapeQualifiedField(`${alias}.${foreign_key}`)} = ${this.#escapeQualifiedField(`${base_table}.id`)}`;
 
        if (include?.where) {
             const where_condition   = this.#parseWhereCondition(alias, include?.where).replace(/^AND\s+/, '');
@@ -341,7 +347,7 @@ class QueryUtil {
             FOR EACH ROW
             EXECUTE FUNCTION ${function_name}();
         `
-        return trigger_sql.trim();
+        return trigger_sql.replace(/\s+/g, ' ').trim();
     }
 }
 

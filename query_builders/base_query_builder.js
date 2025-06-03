@@ -14,8 +14,11 @@ class BaseQueryBuilder {
         const base_fields                           = this.query_util.formatSelectFields(table_name, fields);
     
         const { joins, fields: include_fields }     = this.query_util.formatIncludes(table_name, options?.include);
+
     
-        const full_fields                           = [...base_fields, ...include_fields].join(', ');
+        const field_parts = [base_fields, include_fields].filter(Boolean);
+
+        const full_fields = field_parts.join(', ').replace(/,\s*$/, ''); 
 
         const join_clause                           = joins.join(' ');
     
@@ -31,7 +34,7 @@ class BaseQueryBuilder {
             ${this.query_util.formatOptions(options)}
         `;
         
-        return sql.trim();
+        return sql.replace(/\s+/g, ' ').trim();
     }
 
     // Method to generate select count sql_statement
@@ -52,7 +55,7 @@ class BaseQueryBuilder {
             ${this.query_util.formatOptions(options)}
         `;
 
-        return sql.trim();
+        return sql.replace(/\s+/g, ' ').trim();
     }
 
     // Method to generate insert sql_statement
@@ -68,7 +71,7 @@ class BaseQueryBuilder {
                 (${values})
         `;
 
-        return sql.trim();
+        return sql.replace(/\s+/g, ' ').trim();
     }
 
     // Method to generate bulk insert sql_statement
@@ -92,7 +95,7 @@ class BaseQueryBuilder {
                 ${value_tuples}
         `;
 
-        return sql.trim();
+        return sql.replace(/\s+/g, ' ').trim();
     };
 
     // Method to generate update sql_statement
@@ -107,7 +110,7 @@ class BaseQueryBuilder {
             ${this.query_util.formatWhereClause(table_name, where)}
         `;
 
-        return sql.trim();
+        return sql.replace(/\s+/g, ' ').trim();
     }
 
     // Method to generate increment sql_statement
@@ -119,7 +122,7 @@ class BaseQueryBuilder {
             SET ${set_clause} 
             ${this.query_util.formatWhereClause(table_name, where)}
         `;
-        return sql.trim();
+        return sql.replace(/\s+/g, ' ').trim();
     }
 
     // Method to generate decreement sql_statement
@@ -132,7 +135,7 @@ class BaseQueryBuilder {
             ${this.query_util.formatWhereClause(table_name, where)}
         `;
 
-        return sql.trim();
+        return sql.replace(/\s+/g, ' ').trim();
     }
 
     // Method to generate delete sql statement
@@ -142,7 +145,7 @@ class BaseQueryBuilder {
             ${this.query_util.formatWhereClause(table_name, where)}
         `;
 
-        return sql.trim();
+        return sql.replace(/\s+/g, ' ').trim();
     }
 
     // Method to generate create table sql_statement
@@ -169,7 +172,7 @@ class BaseQueryBuilder {
         `;
 
         return {
-            create_sql: create_table_sql.trim(),
+            create_sql: create_table_sql.replace(/\s+/g, ' ').trim(),
             trigger_sqls: triggers.length > 0 ? triggers : null
         };
     };
@@ -189,7 +192,7 @@ class BaseQueryBuilder {
         const alter_sql = `
             ALTER TABLE ${this.query_util.escapeField(table_name)} 
             ADD COLUMN ${col_definition_sql} ${pos_clause}
-        `.trim();
+        `.replace(/\s+/g, ' ').trim();
 
         return { alter_sql, trigger_sqls: trigger_sql ? [trigger_sql] : [] };
     };
@@ -207,7 +210,7 @@ class BaseQueryBuilder {
                 (${fields})
         `;
 
-        return sql.trim();
+        return sql.replace(/\s+/g, ' ').trim();
     }
 
     // Method to generate dorp coulmn sql statement
@@ -217,7 +220,7 @@ class BaseQueryBuilder {
             DROP COLUMN ${this.query_util.escapeField(column_name)}
         `; 
 
-        return sql.trim();
+        return sql.replace(/\s+/g, ' ').trim();
     }
     
     // Method to get deop index query
@@ -227,13 +230,13 @@ class BaseQueryBuilder {
             ON ${this.query_util.escapeField(table_name)}
         `; 
 
-        return sql.trim();
+        return sql.replace(/\s+/g, ' ').trim();
     }
     
     // Method to get drop table query
     dropTable = (table_name) => { 
         const sql = `DROP TABLE IF EXISTS ${this.query_util.escapeField(table_name)}`;
-        return sql.trim();
+        return sql.replace(/\s+/g, ' ').trim();
     }
 }
 

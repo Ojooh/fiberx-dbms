@@ -16,9 +16,6 @@ class BaseModel {
         this.addComputedAttributes();
     }
 
-    // method to get model associations
-    getAssociations = () => { return this.associations || []; }
-
     // Get registered data source connection
     #getConnector = () => { return DatasourceRegistry.getInstance().getDataSource(this.datasource_type); }
 
@@ -60,7 +57,43 @@ class BaseModel {
     
         return unique_array;
     }
-    
+
+    #denormalizeJoinedResult = (row, includes = [], model = this) => {
+        const base_model_fields = Object.keys(model.schema?.columns || {});
+        const result            = {};
+
+        // Assign base model fields
+        for (const key in row) {
+            if (base_model_fields.includes(key)) {
+                result[key] = row[key];
+            }
+        }
+
+        // Process each include
+        for (const include of includes) {
+            const alias             = include.as || include.model?.schema?.table_name;
+            const included_model    = include.model;
+            const included_fields   = Object.keys(included_model?.schema?.columns || {});
+            const nested_row        = {};
+
+            for (const field of included_fields) {
+                const full_key = `${alias}.${field}`;
+
+                if (row.hasOwnProperty(full_key)) { nested_row[field] = row[full_key]; }
+            }
+
+            // Recursively handle nested includes
+            if (include.include?.length) {
+                result[alias] = this.#denormalizeJoinedResult(nested_row, include.include, included_model);
+            } 
+            else { result[alias] = nested_row; }
+        }
+
+        return result;
+    }
+
+    // method to get model associations
+    getAssociations = () => { return this.associations || []; }
 
     // Register an event listener for the current model
     on = (event, listener) => { this.event_system.on(event, listener); }
@@ -96,11 +129,14 @@ class BaseModel {
             const where             = { [pk_field]: id };
             const qb                = this.#getQueryBuilder();
             const connector         = this.#getConnector()
-            const query             = qb.select(this, this.schema.table_name, fields, where, { ...options, limit: 1 });
-            const results           = await connector.executeQuery(query, options);
+            const query             = qb.select(this.schema.table_name, fields, where, { ...options, limit: 1 });
+            const result            = await connector.executeQuery(query, options);
+            const row               = result && result.length ? result[0] : null
+            const normalized_row    = row ? this.#denormalizeJoinedResult(row, options?.include) : null
 
-            return results?.[0] ? new this.constructor({ ...results[0], schema: this.schema }) : null;
-        } catch (err) {
+            return normalized_row ? new this.constructor({ schema: this.schema, ...normalized_row }) : null;
+        } 
+        catch (err) {
             console.error("findByPk error:", err);
             throw err;
         }
@@ -112,10 +148,11 @@ class BaseModel {
 
             const qb            = this.#getQueryBuilder();
             const connector     = this.#getConnector()
-            const query         = qb.selectCount(this, this.schema.table_name, where, options);
+            const query         = qb.selectCount(this.schema.table_name, where, options);
             const result        = await connector.executeQuery(query, options);
+            const row           = result && result.length ? result[0] : null
 
-            return result?.[0]?.count || 0;
+            return row?.count || 0;
         } catch (err) {
             console.error("count error:", err);
             throw err;
@@ -126,12 +163,14 @@ class BaseModel {
         try {
             this.#validatePermission('read', this.schema.model_name);
 
-            const qb            = this.#getQueryBuilder();
-            const connector     = this.#getConnector()
-            const query         = qb.select(this, this.schema.table_name, fields, where, { ...options, limit: 1 });
-            const results       = await connector.executeQuery(query, options);
+            const qb                = this.#getQueryBuilder();
+            const connector         = this.#getConnector()
+            const query             = qb.select(this.schema.table_name, fields, where, { ...options, limit: 1 });
+            const result            = await connector.executeQuery(query, options);
+            const row               = result && result.length ? result[0] : null
+            const normalized_row    = row ? this.#denormalizeJoinedResult(row, options?.include) : null
 
-            return results?.[0] ? new this.constructor({ ...results[0], schema: this.schema }) : null;
+            return normalized_row ? new this.constructor({ schema: this.schema, ...normalized_row }) : null;
         } catch (err) {
             console.error("findOne error:", err);
             throw err;
@@ -144,11 +183,15 @@ class BaseModel {
 
             const qb            = this.#getQueryBuilder();
             const connector     = this.#getConnector()
-            const query         = qb.select(this, this.schema.table_name, fields, where, options);
+            const query         = qb.select(this.schema.table_name, fields, where, options);
             const results       = await connector.executeQuery(query, options);
 
-            return results.map(row => { return new this.constructor({ ...row, schema: this.schema })});
-        } catch (err) {
+            return results.map((row) => { 
+                const normalized_row    = row ? this.#denormalizeJoinedResult(row, options?.include) : null
+                return normalized_row ? new this.constructor({ schema: this.schema, ...normalized_row }) : null;
+            });
+        } 
+        catch (err) {
             console.error("findAll error:", err);
             throw err;
         }
@@ -160,17 +203,22 @@ class BaseModel {
 
             const qb                = this.#getQueryBuilder();
             const connector         = this.#getConnector()
-            const count_query       = qb.selectCount(this, this.schema.table_name, where);
-            const data_query        = qb.select(this, this.schema.table_name, fields, where, options);
+            const count_query       = qb.selectCount(this.schema.table_name, where);
+            const data_query        = qb.select(this.schema.table_name, fields, where, options);
 
             const [countResult, rows_result] = await Promise.all([
                 connector.executeQuery(count_query, options),
                 connector.executeQuery(data_query, options),
             ]);
 
+            const normalized_rows = rows_result.map((row) => { 
+                const normalized_row    = row ? this.#denormalizeJoinedResult(row, options?.include) : null
+                return normalized_row ? new this.constructor({ schema: this.schema, ...normalized_row }) : null;
+            });
+
             return {
                 count: countResult?.[0]?.count || 0,
-                rows: rows_result.map(row => { return new this.constructor({ ...row, schema: this.schema })}),
+                rows: normalized_rows
             };
         } catch (err) {
             console.error("findAndCountAll error:", err);
@@ -189,13 +237,16 @@ class BaseModel {
             const result        = await connector.executeQuery(query, options);
             const insert_id     = result?.insertId;
             let full_row        = data;
+
             if (insert_id) {
-                const fetch_query = `SELECT * FROM ${this.schema.table_name} WHERE id = ? LIMIT 1`;
-                const [row] = await connector.executeQuery(fetch_query, { params: [insert_id] });
-                full_row = row || data;
+                const fetch_query   = `SELECT * FROM ${this.schema.table_name} WHERE id = ? LIMIT 1`;
+                const [row]         = await connector.executeQuery(fetch_query, { params: [insert_id] });
+                full_row            = row || data; 
             }
 
-            const new_instance  = result ? new this.constructor({ ...result, ...full_row, schema: this.schema }) : null
+            const normalized_row = this.#denormalizeJoinedResult(full_row)
+
+            const new_instance  = normalized_row ? new this.constructor({ schema: this.schema, ...normalized_row }) : null
 
             this.#triggerHook('after_create', new_instance, options);
             return new_instance;
