@@ -278,7 +278,8 @@ class QueryUtil {
         const { model: target_model, foreign_key, target_key } = association;
 
         const target_table          = target_model?.schema?.table_name;
-        const target_fields         = include?.fields || Object.keys(target_model?.schema?.columns);
+        const all_fields            = Object.keys(target_model?.schema?.columns);
+        const target_fields         = include?.fields?.length && include?.fields?.includes('*') ? all_fields : include?.fields || all_fields;
         const alias                 = include?.as || target_table;
         const required              = include.required !== false; 
         const type                  = required ? 'INNER' : 'LEFT';
@@ -311,7 +312,7 @@ class QueryUtil {
         const plain_alias           = include.as || target_table;
         const alias                 = `${plain_alias}_sub`;
         const all_fields            = Object.keys(target_model?.schema?.columns);
-        const resolved_fields       = include?.fields?.length && include?.fields?.includes('*') ? all_fields : include?.fields;
+        const resolved_fields       = include?.fields?.length && include?.fields?.includes('*') ? all_fields : include?.fields || all_fields;
         const field_mappings        = this.formatSelectFields(alias, resolved_fields);
         let where_clause            = `${this.#escapeQualifiedField(`${alias}.${foreign_key}`)} = ${this.#escapeQualifiedField(`${base_table}.id`)}`;
 
