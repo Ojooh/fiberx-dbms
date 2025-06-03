@@ -278,6 +278,7 @@ class QueryUtil {
         const { model: target_model, foreign_key, target_key } = association;
 
         const target_table          = target_model?.schema?.table_name;
+        const target_fields         = include?.fields || Object.keys(target_model?.schema?.columns);
         const alias                 = include?.as || target_table;
         const required              = include.required !== false; 
         const type                  = required ? 'INNER' : 'LEFT';
@@ -291,7 +292,7 @@ class QueryUtil {
             where_clause            += ` AND (${where_condition})`;
         }
 
-        const fields = this.formatSelectFields(alias, include?.fields)
+        const fields = this.formatSelectFields(alias, target_fields)
 
         const join = `${type} JOIN ${this.#quoteIdentifier(target_table)} AS ${this.#quoteIdentifier(alias)} ON ${where_clause}`;
 
