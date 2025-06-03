@@ -63,7 +63,7 @@ class ${model_name}InitialMigration {
     async up() {
         const { create_sql, trigger_sqls }  = this.builder.createTable(${model_name}Schema);
 
-        await this.connector.executeQuery(create);
+        await this.connector.executeQuery(create_sql);
 
         if (trigger_sqls && Array.isArray(trigger_sqls)) {
             for (const trigger_sql of trigger_sqls) {
