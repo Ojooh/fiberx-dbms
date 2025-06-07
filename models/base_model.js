@@ -271,7 +271,7 @@ class BaseModel {
 
             const qb            = this.#getQueryBuilder();
             const connector     = this.#getConnector()
-            const query         = qb.bulkInsert(this.schema, final_data, options);
+            const query         = qb.bulkInsert(this.schema?.table_name, this.schema?.columns, final_data, options);
             const result        = await connector.executeQuery(query);
             const new_instances  = result ? final_data.map(row => { return new this.constructor({ ...row, schema: this.schema })}) : null
 

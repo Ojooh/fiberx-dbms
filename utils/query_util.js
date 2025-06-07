@@ -114,7 +114,7 @@ class QueryUtil {
     formatColumnDefinition = (column_name, options) => {
         const { 
             type = {}, auto_increment = false, unique = false, default: default_value = undefined,  
-            on_update = null, nullable = false, references = {}
+            on_update = null, nullable = true, references = {}
         } = options;
 
         const is_postgres = this.dialect === 'postgres';
@@ -132,7 +132,7 @@ class QueryUtil {
         } 
         else { sql_type = this.data_typer_mapper(type); }
 
-        let col_definition_sql = `${this.query_util.escapeField(column_name)} ${sql_type}`;
+        let col_definition_sql = `${this.escapeField(column_name)} ${sql_type}`;
     
         if (is_mysql && (sql_type === 'INT' || sql_type === 'BIGINT') && auto_increment) { col_definition_sql += ' AUTO_INCREMENT'; }
     
@@ -141,17 +141,17 @@ class QueryUtil {
         if (default_value !== undefined) {
             if (default_value === 'CURRENT_TIMESTAMP') { col_definition_sql += ' DEFAULT CURRENT_TIMESTAMP';} 
             
-            else { col_definition_sql += ` DEFAULT ${this.query_util.escapeValue(default_value)}`;}
+            else { col_definition_sql += ` DEFAULT ${this.escapeValue(default_value)}`;}
         }
     
         if (is_mysql && on_update === 'CURRENT_TIMESTAMP') { col_definition_sql += ' ON UPDATE CURRENT_TIMESTAMP'; }
     
         if (nullable === false) { col_definition_sql += ' NOT NULL'; }
     
-        if (references) {
+        if (references && Object.keys(references).length) {
             const { table, column, on_delete, on_update }     = references;
 
-            col_definition_sql  += ` REFERENCES ${this.query_util.escapeField(table)}(${this.query_util.escapeField(column)})`;
+            col_definition_sql  += ` REFERENCES ${this.escapeField(table)}(${this.escapeField(column)})`;
     
             if (on_delete)  { col_definition_sql += ` ON DELETE ${on_delete.toUpperCase()}`; }
 
