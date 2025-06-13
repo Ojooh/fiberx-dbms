@@ -63,12 +63,14 @@ class BaseModel {
         const result            = {};
 
         // Assign base model fields
+        // Assign base model fields
         for (const key in row) {
-            if (base_model_fields.includes(key)) {
-                result[key] = row[key];
+            const field_key = key.replace(`${model?.schema?.table_name}.`, "");
+            if (base_model_fields.includes(field_key)) {
+                result[field_key] = row[key];
             }
         }
-
+        
         // Process each include
         for (const include of includes) {
             const alias             = include.as || include.model?.schema?.table_name;
