@@ -101,7 +101,7 @@ class BaseQueryBuilder {
     // Method to generate update sql_statement
     update = (table_name, where, data) => {
         const set_clause = Object.entries(data).map(
-            ([k, v]) => `${this.query_util.escapeField(`${table_name}.${k}`)} = ${this.query_util.escapeValue(v)}`
+            ([k, v]) => `${this.query_util.escapeQualifiedField(`${table_name}.${k}`)} = ${this.query_util.escapeValue(v)}`
         ).join(', ');
 
         const sql = `

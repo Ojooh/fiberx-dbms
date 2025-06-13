@@ -31,8 +31,13 @@ class QueryUtil {
         if (Array.isArray(value)) {
             return `(${value.map(v => this.escapeValue(v)).join(', ')})`;
         }
-        if (typeof value === 'object' && value !== null) {
+        
+        if (typeof value === 'object' && value !== null && !(value instanceof Date)) {
             throw new Error('Cannot escape object value directly');
+        }
+
+        if(value instanceof Date ) {
+            return `'${value.toISOString()}'`;
         }
 
         return value === null ? 'NULL' : value.toString();

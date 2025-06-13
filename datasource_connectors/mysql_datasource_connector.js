@@ -115,7 +115,9 @@ class MysqlDatasourceConnector {
 
         const connection = await this.pool.getConnection();
         await connection.beginTransaction();
-        connection.transaction_id = randomUUID()();
+        connection.transaction_id = randomUUID();
+
+        this.logger.info(`[${connection.transaction_id}] BEGIN TRANSACTION`);
 
         return connection;
     }
@@ -124,12 +126,14 @@ class MysqlDatasourceConnector {
     commitTransaction = async (connection)  => {
         await connection.commit();
         connection.release();
+        this.logger.info(`[${connection.transaction_id}] COMMIT TRANSACTION`);
     }
 
     // Method to rollback a transaction
     rollbackTransaction = async (connection) => {
         await connection.rollback();
         connection.release();
+        this.logger.info(`[${connection.transaction_id}] ROLLBACK TRANSACTION`)
     }
 }
 

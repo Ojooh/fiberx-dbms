@@ -100,7 +100,9 @@ class PostgresDatasourceConnector {
 
         const client = await this.pool.connect();
         await client.query('BEGIN');
-        client.transaction_id = randomUUID()();
+        client.transaction_id = randomUUID();
+
+        this.logger.info(`[${client.transaction_id}] BEGIN TRANSACTION`);
         return client;
     }
 
@@ -108,12 +110,16 @@ class PostgresDatasourceConnector {
     commitTransaction = async (client) => {
         await client.query('COMMIT');
         client.release();
+
+        this.logger.info(`[${client.transaction_id}] COMMIT TRANSACTION`);
     }
 
     // method to rollback transaction
     rollbackTransaction = async (client) => {
         await client.query('ROLLBACK');
         client.release();
+
+        this.logger.info(`[${client.transaction_id}] ROLLBACK TRANSACTION`)
     }
 
     // method to execute query
