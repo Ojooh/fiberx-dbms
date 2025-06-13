@@ -104,7 +104,7 @@ class QueryUtil {
     
         if (distinct) { clause += ' DISTINCT'; }
 
-        if (order_by) { clause += ` ORDER BY ${Array.isArray(order_by) ? order_by.join(', ') : order_by}`;  }
+        if (order_by) { clause += ` ORDER BY ${Array.isArray(order_by) ? order_by.join(' ') : order_by}`;  }
 
         if (limit) { clause += ` LIMIT ${limit}`; }
 
