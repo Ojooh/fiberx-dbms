@@ -115,7 +115,7 @@ class BaseQueryBuilder {
 
     // Method to generate increment sql_statement
     increment = (table_name, where, field, amount = 1) => {
-        const escaped_field     = this.query_util.escapeField(`${table_name}.${field}`);
+        const escaped_field     = this.query_util.escapeQualifiedField(`${table_name}.${field}`);
         const set_clause        = `${escaped_field} = ${escaped_field} + ${this.query_util.escapeValue(amount)}`;
         const sql               = `
             UPDATE ${this.query_util.escapeField(table_name)} 
@@ -127,7 +127,7 @@ class BaseQueryBuilder {
 
     // Method to generate decreement sql_statement
     decrement = (table_name, where, field, amount = 1) => {
-        const escaped_field     = this.query_util.escapeField(`${table_name}.${field}`);
+        const escaped_field     = this.query_util.escapeQualifiedField(`${table_name}.${field}`);
         const set_clause        = `${escaped_field} = ${escaped_field} - ${this.query_util.escapeValue(amount)}`;
         const sql               = `
             UPDATE ${this.query_util.escapeField(table_name)} 

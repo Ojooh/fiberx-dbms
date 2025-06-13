@@ -18,6 +18,11 @@ class QueryUtil {
         return `${quote_char}${escaped}${quote_char}`;
     };
 
+    escapeQualifiedField = (qualified) => {
+        const [table, column] = qualified.split('.');
+        return `${this.escapeField(table)}.${this.escapeField(column)}`;
+    };
+
     // method to escape value
     escapeValue = (value) => {
         if (typeof value === 'string') {
