@@ -95,6 +95,15 @@ class ModelAndSchemaLoaderScript {
                 const model_path                = path.join(this.models_dir, `${pascalToSnake(model_name)}.js`);
                 const schema_full_path          = path.join(this.schemas_dir, app_id, schema_file_name);
 
+                // Skip if model file exists and has content
+                if (fs.existsSync(model_path)) {
+                    const model_content = fs.readFileSync(model_path, { encoding: "utf-8" }).trim();
+                    if (model_content.length > 0) {
+                        this.logger.log(`⚠️  Skipped: Model file for ${model_name} already exists and is not empty (${model_path})`);
+                        continue;
+                    }
+                }
+
                 if (!fs.existsSync(schema_full_path)) {
                     this.logger.error(`❌ Schema file NOT found at: ${schema_full_path}`);
                     continue;
