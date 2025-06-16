@@ -378,7 +378,7 @@ class BaseModel {
     // === Constructor ===
 
     constructor(data = {}) {
-        this.#addMSchemaFieldsToModel(data);
+        Object.assign(this, data); // Assign data to instance properties
         this.addComputedAttributes(); // No-op unless overridden
     }
 
