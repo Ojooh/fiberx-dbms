@@ -1,158 +1,142 @@
-const getQueryBuilder       = require("../query_builders/query_builder_resolver");
-const DatasourceRegistry    = require("../datasource_connectors/datasource_registry");
-const EventSystem           = require("../utils/event_system_util");
-const GlobalVariableManager = require("../utils/global_variable_manager");
+const BaseModelUtil = require("./base_model_util");
 
 class BaseModel {
-    static associations = [];
+    // Default static properties (can be overridden by subclasses)
+    static schema               = {};
+    static associations         = [];
+    static _model_util          = null;
 
-    constructor(data) {
-        this.event_system = new EventSystem();
-
-        Object.assign(this, data);
-        this.schema = data?.schema;
-        this.datasource_type = data?.schema?.datasource_type;
-
-        this.addComputedAttributes();
-    }
-
-    // Get registered data source connection
-    #getConnector = () => { return DatasourceRegistry.getInstance().getDataSource(this.datasource_type); }
-
-    // Get query builder for data source
-    #getQueryBuilder = () => { return getQueryBuilder(this.datasource_type, this); }
-
-    // Trigger an event in the current model
-    #triggerHook = (hook, data, options) => { this.event_system.emit(hook, data, options); }
-
-    // method to validate db permission
-    #validatePermission = (action, model_name) => {
-        const { app_id, model_name: schema_model_name } = this.schema;
-
-        const global_vars       = GlobalVariableManager.getInstance();
-        const schema_files      = global_vars?.getVariable("SCHEMA_FILES") || [];
-        const schema_obj        = schema_files.find((obj) => { return obj?.app_id === app_id && obj.model_name === schema_model_name });
-        const permissions       = schema_obj?.permissions || [];
-
-
-        if (!permissions || !permissions.includes(action)) {
-            throw new Error(`Permission denied: ${action} not allowed on model ${model_name} for app ${app_id}.`);
-        } 
-        else { return true; }
-    }
-
-    // Method to get a unique array
-    #getUniqueArray = (arr) => {
-        const seen          = new Set();
-        const unique_array   = [];
-    
-        for (const item of arr) {
-            const key = typeof item === 'object' && item !== null ? JSON.stringify(item, Object.keys(item).sort())  : item;
-    
-            if (!seen.has(key)) {
-                seen.add(key);
-                unique_array.push(item);
-            }
+    // Utility accessor (stateless instantiation)
+    static get model_util () { 
+        if (!this._model_util) {
+            this._model_util = new BaseModelUtil();
         }
-    
-        return unique_array;
+        return this._model_util;
     }
 
-    #denormalizeJoinedResult = (row, includes = [], model = this) => {
-        const base_model_fields = Object.keys(model.schema?.columns || {});
-        const result            = {};
+    // Safely access datasource type
+    static get datasource_type() { return this.schema?.datasource_type; }
 
-        // Assign base model fields
-        // Assign base model fields
-        for (const key in row) {
-            const field_key = key.replace(`${model?.schema?.table_name}.`, "");
-            if (base_model_fields.includes(field_key)) {
-                result[field_key] = row[key];
-            }
-        }
-        
-        // Process each include
-        for (const include of includes) {
-            const alias             = include.as || include.model?.schema?.table_name;
-            const included_model    = include.model;
-            const included_fields   = Object.keys(included_model?.schema?.columns || {});
-            const nested_row        = {};
+    // === Association Methods ===
 
-            for (const field of included_fields) {
-                const full_key = `${alias}.${field}`;
+    static getAssociations = () => { return this.associations || []; };
 
-                if (row.hasOwnProperty(full_key)) { nested_row[field] = row[full_key]; }
-            }
+    static registerAssociation = (definition) => {
+        if (!this.associations) {  this.associations = []; }
 
-            // Recursively handle nested includes
-            if (include.include?.length) {
-                result[alias] = this.#denormalizeJoinedResult(nested_row, include.include, included_model);
-            } 
-            else { result[alias] = nested_row; }
-        }
+        this.associations.push(definition);
+    };
 
-        return result;
-    }
+    static hasMany = (target, options) => {
+        return this.registerAssociation({ type: 'hasMany', source: this, model: target, ...options });
+    };
 
-    // method to get model associations
-    getAssociations = () => { return this.associations || []; }
+    static hasOne = (target, options) => {
+        return this.registerAssociation({ type: 'hasOne', source: this, model: target, ...options });
+    };
 
-    // Register an event listener for the current model
-    on = (event, listener) => { this.event_system.on(event, listener); }
+    static belongsTo = (target, options) => {
+        return this.registerAssociation({ type: 'belongsTo', source: this, model: target, ...options });
+    };
 
-    // Add computed fields to instance (to override in child classes)
-    addComputedAttributes = () => {}
+    static belongsToMany = (target, options) => {
+        return this.registerAssociation({ type: 'belongsToMany', source: this, model: target, ...options });
+    };
 
-    // method to register associations
-    registerAssociation = (def) => {
-        if (!this.associations) this.associations = [];
-        this.associations.push(def);
-    }
-
-    // Define a one-to-many relationship (e.g., User hasMany Posts)
-    hasMany = (target, options) => { this.registerAssociation({type: 'hasMany', source: this, model: target,  ...options }); }
-
-    // Define a one-to-one relationship (e.g., User hasOne Profile)
-    hasOne = (target, options) => { this.registerAssociation({ type: 'hasOne', source: this, model: target, ...options }); }
-
-    // Define an inverse relationship (e.g., Post belongsTo User)
-    belongsTo = (target, options) => { this.registerAssociation({ type: 'belongsTo', source: this, model: target, ...options }); }
-
-    // Define a many-to-many relationship (e.g., Post belongsToMany Tag through PostTag)
-    belongsToMany(target, options) { this.registerAssociation({ type: 'belongsToMany', source: this, model: target, ...options }); }
-
+    // === Query Methods ===
 
     // Method to find record based on primary key
-    findByPk = async (id, fields, options = {}) => {
+    static findByPk = async (id, fields = [], options = {}) => {
+        if (!Array.isArray(fields)) {throw new Error("Expected 'fields' to be an array");}
+    
+
         try {
-            this.#validatePermission('read', this.schema.model_name);
+            const { schema }    = this;
 
-            const pk_field          = this.schema.primary_key?.toString() || "id";
-            const where             = { [pk_field]: id };
-            const qb                = this.#getQueryBuilder();
-            const connector         = this.#getConnector()
-            const query             = qb.select(this.schema.table_name, fields, where, { ...options, limit: 1 });
-            const result            = await connector.executeQuery(query, options);
-            const row               = result && result.length ? result[0] : null
-            const normalized_row    = row ? this.#denormalizeJoinedResult(row, options?.include) : null
+            this.model_util.validatePermission(schema, 'read', schema?.model_name);
 
-            return normalized_row ? new this.constructor({ schema: this.schema, ...normalized_row }) : null;
-        } 
-        catch (err) {
+            const associations          = this.getAssociations();
+            const pk_field              = schema?.primary_key?.toString() || "id";
+            const where                 = { [pk_field]: id };
+            const query_params          = { schema, associations, query_method_name: "select", fields, where, options: { ...options, limit: 1 } };
+            const { connector, query }  = this.model_util.buildQueryWithConnector(query_params);
+            const result                = await connector.executeQuery(query, options);
+            const row                   = result?.[0] || null;
+            const normalized            = row ? this.model_util.denormalizeJoinedResult(schema, row, options?.include) : null;
+
+            return normalized ? new this(normalized) : null;
+        } catch (err) {
             console.error("findByPk error:", err);
             throw err;
         }
     }
 
-    count = async (where, options = {}) => {
-        try {
-            this.#validatePermission('read', this.schema.model_name);
+    // Method to find a single record based on fields and conditions
+    static findOne = async (fields, where, options = {}) => {
+        if (!Array.isArray(fields)) {throw new Error("Expected 'fields' to be an array");}
+        
+        if (typeof where !== 'object') {throw new Error("Expected 'where' to be an object");}
 
-            const qb            = this.#getQueryBuilder();
-            const connector     = this.#getConnector()
-            const query         = qb.selectCount(this.schema.table_name, where, options);
-            const result        = await connector.executeQuery(query, options);
-            const row           = result && result.length ? result[0] : null
+        try {
+            const { schema }    = this;
+
+            this.model_util.validatePermission(schema, 'read', schema?.model_name);
+
+            const associations          = this.getAssociations();
+            const query_params          = { schema, associations, query_method_name: "select", fields, where, options: { ...options, limit: 1 } };
+            const { connector, query }  = this.model_util.buildQueryWithConnector(query_params);
+            const result                = await connector.executeQuery(query, options);
+            const row                   = result?.[0] || null;
+            const normalized            = row ? this.model_util.denormalizeJoinedResult(schema, row, options?.include) : null;
+            
+            return normalized ? new this(normalized) : null;
+        } catch (err) {
+            console.error("findOne error:", err);
+            throw err;
+        }
+    }
+
+    // Method to find all records based on fields and conditions
+    static findAll = async (fields, where, options = {}) => {
+        if (!Array.isArray(fields)) {throw new Error("Expected 'fields' to be an array");}
+        
+        if (typeof where !== 'object') {throw new Error("Expected 'where' to be an object");}
+
+        try {
+            const { schema }    = this;
+
+            this.model_util.validatePermission(schema, 'read', schema?.model_name);
+
+            const associations          = this.getAssociations();
+            const query_params          = { schema, associations, query_method_name: "select", fields, where, options };
+            const { connector, query }  = this.model_util.buildQueryWithConnector(query_params);
+            const result                = await connector.executeQuery(query, options);
+            
+            return result.map((row) => { 
+                const normalized_row    = row ? this.model_util.denormalizeJoinedResult(schema, row, options?.include)  : null
+                return normalized_row ? new this(normalized_row) : null;
+            });
+        }
+        catch (err) {
+            console.error("findAll error:", err);
+            throw err;
+        }
+    }
+
+    // Method to count records based on conditions
+    static count = async (where, options = {}) => {
+        if (typeof where !== 'object') {throw new Error("Expected 'where' to be an object");}
+
+        try {
+            const { schema }    = this;
+
+            this.model_util.validatePermission(schema, 'read', schema?.model_name);
+
+            const associations          = this.getAssociations();
+            const query_params          = { schema, associations, query_method_name: "selectCount", fields: null, where, options };
+            const { connector, query }  = this.model_util.buildQueryWithConnector(query_params);
+            const result                = await connector.executeQuery(query, options);
+            const row                   = result && result.length ? result[0] : null
 
             return row?.count || 0;
         } catch (err) {
@@ -161,96 +145,64 @@ class BaseModel {
         }
     }
 
-    findOne = async (fields, where, options = {}) => {
+    // Method to find and count all records based on fields and conditions
+    static findAndCountAll = async (fields, where, options = {}) => {
+        if (!Array.isArray(fields)) {throw new Error("Expected 'fields' to be an array");}
+
+        if (typeof where !== 'object') {throw new Error("Expected 'where' to be an object");}
+
         try {
-            this.#validatePermission('read', this.schema.model_name);
+            const { schema }    = this;
 
-            const qb                = this.#getQueryBuilder();
-            const connector         = this.#getConnector()
-            const query             = qb.select(this.schema.table_name, fields, where, { ...options, limit: 1 });
-            const result            = await connector.executeQuery(query, options);
-            const row               = result && result.length ? result[0] : null
-            const normalized_row    = row ? this.#denormalizeJoinedResult(row, options?.include) : null
+            this.model_util.validatePermission(schema, 'read', schema?.model_name);
 
-            return normalized_row ? new this.constructor({ schema: this.schema, ...normalized_row }) : null;
-        } catch (err) {
-            console.error("findOne error:", err);
-            throw err;
-        }
-    }
-
-    findAll = async (fields, where, options = {}) => {
-        try {
-            this.#validatePermission('read', this.schema.model_name);
-
-            const qb            = this.#getQueryBuilder();
-            const connector     = this.#getConnector()
-            const query         = qb.select(this.schema.table_name, fields, where, options);
-            const results       = await connector.executeQuery(query, options);
-
-            return results.map((row) => { 
-                const normalized_row    = row ? this.#denormalizeJoinedResult(row, options?.include) : null
-                return normalized_row ? new this.constructor({ schema: this.schema, ...normalized_row }) : null;
-            });
-        } 
-        catch (err) {
-            console.error("findAll error:", err);
-            throw err;
-        }
-    }
-
-    findAndCountAll = async (fields, where, options = {}) => {
-        try {
-            this.#validatePermission('read', this.schema.model_name);
-
-            const qb                = this.#getQueryBuilder();
-            const connector         = this.#getConnector()
-            const count_query       = qb.selectCount(this.schema.table_name, where);
-            const data_query        = qb.select(this.schema.table_name, fields, where, options);
-
-            const [countResult, rows_result] = await Promise.all([
+            const associations                              = this.getAssociations();
+            const query_params                              = { schema, associations, query_method_name: "select", fields, where, options };
+            const { connector, count_query, data_query }    = this.model_util.buildCountQueryWithConnector(query_params);
+            const [countResult, rows_result]                = await Promise.all([
                 connector.executeQuery(count_query, options),
                 connector.executeQuery(data_query, options),
             ]);
 
             const normalized_rows = rows_result.map((row) => { 
-                const normalized_row    = row ? this.#denormalizeJoinedResult(row, options?.include) : null
-                return normalized_row ? new this.constructor({ schema: this.schema, ...normalized_row }) : null;
+                const normalized_row    = row ? this.model_util.denormalizeJoinedResult(schema, row, options?.include)  : null
+                return normalized_row ? new this(normalized_row) : null;
             });
 
-            return {
-                count: countResult?.[0]?.count || 0,
-                rows: normalized_rows
-            };
+            return { count: countResult?.[0]?.count || 0, rows: normalized_rows };
         } catch (err) {
             console.error("findAndCountAll error:", err);
             throw err;
         }
     }
 
-    create = async (data, options = {}) => {
-        try {
-            this.#validatePermission('create', this.schema.model_name);
-            this.#triggerHook('before_create', data, options);
+    // Method to create a new record
+    static create = async (data, options = {}) => {
+        if (typeof data !== 'object') {throw new Error("Expected 'data' to be an object");}
 
-            const qb            = this.#getQueryBuilder();
-            const connector     = this.#getConnector()
-            const query         = qb.insert(this.schema.table_name, data, options);
-            const result        = await connector.executeQuery(query, options);
-            const insert_id     = result?.insertId;
+        try {
+            const { schema }    = this;
             let full_row        = data;
 
-            if (insert_id) {
-                const fetch_query   = `SELECT * FROM ${this.schema.table_name} WHERE id = ? LIMIT 1`;
-                const [row]         = await connector.executeQuery(fetch_query, { params: [insert_id] });
-                full_row            = row || data; 
-            }
+            this.model_util.validatePermission(schema, 'create', schema?.model_name);
 
-            const normalized_row = this.#denormalizeJoinedResult(full_row)
+            const associations          = this.getAssociations();
+            const query_params          = { schema, associations, query_method_name: "insert", fields: null, where: null, options, data };
+            const { connector, query }  = this.model_util.buildQueryWithConnector(query_params);
 
-            const new_instance  = normalized_row ? new this.constructor({ schema: this.schema, ...normalized_row }) : null
+            this.model_util.triggerHook(schema?.model_name, 'before_create', data, options);
 
-            this.#triggerHook('after_create', new_instance, options);
+            const { insertId: insert_id } = await connector.executeQuery(query, options);
+
+            if(!insert_id) { return null }
+
+            const fetch_query       = `SELECT * FROM ${schema?.table_name} WHERE id = ? LIMIT 1`;
+            const [row]             = await connector.executeQuery(fetch_query, { params: [insert_id] });
+            full_row                = row || data; 
+            const normalized_row    = this.model_util.denormalizeJoinedResult(schema, full_row, options?.include)
+            const new_instance      = normalized_row ? new this(normalized_row) : null;
+
+            this.model_util.triggerHook(schema?.model_name, 'after_create', new_instance, options);
             return new_instance;
         } catch (err) {
             console.error("create error:", err);
@@ -258,47 +210,65 @@ class BaseModel {
         }
     }
 
-    bulkCreate = async (data, options = {}) => {
+    // Method to bulk create records
+    static bulkCreate = async (data, options = {}) => {
+        if (!Array.isArray(data)) {throw new Error("Expected 'data' to be an array");}
+
         try {
-            this.#validatePermission('create', this.schema.model_name);
-            this.#triggerHook('before_bulk_create', data, options);
+            const { schema }    = this;
+            let full_rows        = data;
+
+            this.model_util.validatePermission(schema, 'create', schema?.model_name);
 
             const ignore_duplicates = options.ignore_duplicates !== false;
 
-            let final_data = data;
+            if (ignore_duplicates) { full_rows = this.model_util?.getUniqueArray(data); }
 
-            if (ignore_duplicates) {
-                final_data = this.#getUniqueArray(data);
-            }
+            const associations          = this.getAssociations();
+            const query_params          = { schema, associations, query_method_name: "bulkInsert", fields: null, where: null, options, data: full_rows };
+            const { connector, query }  = this.model_util.buildQueryWithConnector(query_params);
 
-            const qb            = this.#getQueryBuilder();
-            const connector     = this.#getConnector()
-            const query         = qb.bulkInsert(this.schema?.table_name, this.schema?.columns, final_data, options);
+            this.model_util.triggerHook(schema?.model_name, 'before_bulk_create', data, options);
+
             const result        = await connector.executeQuery(query);
-            const new_instances  = result ? final_data.map(row => { return new this.constructor({ ...row, schema: this.schema })}) : null
+            const new_instances  = full_rows.map((row) => { 
+                const normalized_row = this.model_util.denormalizeJoinedResult(schema, row, options?.include);
+                return new this(normalized_row);
+            });
 
-            this.#triggerHook('after_bulk_create', new_instances, options);
+            console.log({ result });
+            this.model_util.triggerHook(schema?.model_name, 'after_bulk_create', new_instances, options);
             return new_instances;
         } catch (err) {
-            console.error("create error:", err);
+            console.error("bulkCreate error:", err);
             throw err;
         }
     }
 
-    update = async (data, where, options = {}) => {
+    // Method to update records based on conditions
+    static  update = async (data, where, options = {}) => {
+        if (typeof data !== 'object') {throw new Error("Expected 'data' to be an object");}
+
+        if (typeof where !== 'object') {throw new Error("Expected 'where' to be an object");}
+
         try {
-            this.#validatePermission('update', this.schema.model_name);
-            this.#triggerHook('before_update', data, options);
+            const { schema }    = this;
 
-            const qb            = this.#getQueryBuilder();
-            const connector     = this.#getConnector();
-            const pk_field      = this.schema.primary_key?.toString() || "id";
-            const final_where   = where || { [pk_field]: this[pk_field] };
-            const query         = qb.update(this.schema.table_name, final_where, data, options);
-            const result        = await connector.executeQuery(query, options);
-            console.log({ result })
+            this.model_util.validatePermission(schema, 'update', schema?.model_name);
 
-            this.#triggerHook('after_update', this);
+            const associations          = this.getAssociations();
+            const pk_field              = schema.primary_key?.toString() || "id";
+            const final_where           = where || { [pk_field]: this[pk_field] };
+            const query_params          = { schema, associations, query_method_name: "update", fields: null, where: final_where, options, data };
+            const { connector, query }  = this.model_util.buildQueryWithConnector(query_params);
+
+            this.model_util.triggerHook(schema?.model_name, 'before_update', data, options);
+
+            const result            = await connector.executeQuery(query, options);
+            
+            if (result?.affectedRows === 0) { return null; }
+
+            this.model_util.triggerHook(schema?.model_name, 'after_update', data, options);
             return true;
         } catch (err) {
             console.error("update error:", err);
@@ -306,20 +276,30 @@ class BaseModel {
         }
     }
 
-    increment = async (field, where = null, amount = 1, options = {}) => {
+    // Method to increment a record field based on conditions
+    static  increment = async (field, where = null, amount = 1, options = {}) => {
+        if (!field || typeof field !== 'string') {throw new Error("Expected 'field' to be a string");}
+
+        if (typeof where !== 'object') {throw new Error("Expected 'where' to be an object");}
+
+        if (typeof amount !== 'number') {throw new Error("Expected 'amount' to be a number");}
+
         try {
-            this.#validatePermission('update', this.schema.model_name);
-            this.#triggerHook('before_increment', { field, amount }, options);
+            const { schema }    = this;
 
-            const qb            = this.#getQueryBuilder();
-            const connector     = this.#getConnector();
-            const pk_field      = this.schema.primary_key?.toString() || 'id';
-            const final_where   = where || { [pk_field]: this[pk_field] };
+            this.model_util.validatePermission(schema, 'update', schema?.model_name);
 
-            const query         = qb.increment(this.schema.table_name, final_where, field, amount);
+            const associations          = this.getAssociations();
+            const pk_field              = schema.primary_key?.toString() || "id";
+            const final_where           = where || { [pk_field]: this[pk_field] };
+            const query_params          = { schema, associations, query_method_name: "increment", fields: [field], where: final_where, options, data, amount };
+            const { connector, query }  = this.model_util.buildQueryWithConnector(query_params);
+
+            this.model_util.triggerHook(schema?.model_name, 'before_increment', { field, amount, where: final_where }, options);
+
             const result        = await connector.executeQuery(query, options);
 
-            this.#triggerHook('after_increment', { field, amount }, options);
+            this.model_util.triggerHook(schema?.model_name, 'after_increment', { field, amount, where: final_where }, options);
             return true;
         } catch (err) {
             console.error("increment error:", err);
@@ -327,20 +307,30 @@ class BaseModel {
         }
     }
 
-    decrement = async (field, where = null, amount = 1,  options = {}) => {
+    // Method to decrement a record field based on conditions
+    static  decrement = async (field, where = null, amount = 1, options = {}) => {
+        if (!field || typeof field !== 'string') {throw new Error("Expected 'field' to be a string");}
+
+        if (typeof where !== 'object') {throw new Error("Expected 'where' to be an object");}
+
+        if (typeof amount !== 'number') {throw new Error("Expected 'amount' to be a number");}
+
         try {
-            this.#validatePermission('update', this.schema.model_name);
-            this.#triggerHook('before_decrement', { field, amount }, options);
+            const { schema }    = this;
 
-            const qb            = this.#getQueryBuilder();
-            const connector     = this.#getConnector();
-            const pk_field      = this.schema.primary_key?.toString() || 'id';
-            const final_where   = where || { [pk_field]: this[pk_field] };
+            this.model_util.validatePermission(schema, 'update', schema?.model_name);
 
-            const query         = qb.decrement(this.schema.table_name, final_where, field, amount);
+            const associations          = this.getAssociations();
+            const pk_field              = schema.primary_key?.toString() || "id";
+            const final_where           = where || { [pk_field]: this[pk_field] };
+            const query_params          = { schema, associations, query_method_name: "decrement", fields: [field], where: final_where, options, data, amount };
+            const { connector, query }  = this.model_util.buildQueryWithConnector(query_params);
+
+            this.model_util.triggerHook(schema?.model_name, 'before_decrement', { field, amount, where: final_where }, options);
+
             const result        = await connector.executeQuery(query, options);
 
-            this.#triggerHook('after_decrement', { field, amount }, options);
+            this.model_util.triggerHook(schema?.model_name, 'after_decrement', { field, amount, where: final_where }, options);
             return true;
         } catch (err) {
             console.error("decrement error:", err);
@@ -348,26 +338,43 @@ class BaseModel {
         }
     }
 
-    destroy = async (where, options = {}) => {
-        try {
-            this.#validatePermission('delete', this.schema.model_name);
-            this.#triggerHook('before_destroy', { where, options });
+    // Method to delete records based on conditions
+    static delete = async (where, options = {}) => {
+        if (typeof where !== 'object') {throw new Error("Expected 'where' to be an object");}
 
-            const qb            = this.#getQueryBuilder();
-            const connector     = this.#getConnector();
-            const pk_field      = this.schema.primary_key?.toString() || "id";
-            const final_where   = where || { [pk_field]: this[pk_field] };
-            const query         = qb.delete(this.schema.table_name, final_where);
+        try {
+            const { schema }    = this;
+
+            this.model_util.validatePermission(schema, 'delete', schema?.model_name);
+
+            const associations          = this.getAssociations();
+            const pk_field              = schema.primary_key?.toString() || "id";
+            const final_where           = where || { [pk_field]: this[pk_field] };
+            const query_params          = { schema, associations, query_method_name: "delete", fields: null, where: final_where, options };
+            const { connector, query }  = this.model_util.buildQueryWithConnector(query_params);
+
+            this.model_util.triggerHook(schema?.model_name, 'before_delete', final_where, options);
+
             const result        = await connector.executeQuery(query, options);
 
-            this.#triggerHook('after_destroy', this);
-            return true;
+            this.model_util.triggerHook(schema?.model_name, 'after_delete', final_where, options);
+            return result?.affectedRows > 0;
         } catch (err) {
-            console.error("destroy error:", err);
+            console.error("delete error:", err);
             throw err;
         }
     }
 
+
+    // === Constructor ===
+
+    constructor(data = {}) {
+        Object.assign(this, data);
+        this.addComputedAttributes(); // No-op unless overridden
+    }
+
+    // Default implementation, override in subclass if needed
+    addComputedAttributes () { }
 }
 
 module.exports = BaseModel;

@@ -2,9 +2,11 @@ const mapToPostgresType = require("../datatypes/postgres");
 const mapToMySQLType    = require("../datatypes/mysql");
 
 class QueryUtil {
-    constructor(model_instance, dialect = "mysql",  logger = null) {
+    constructor(dialect = "mysql", schema = {}, associations = [],   logger = null) {
         this.model_instance     = model_instance
         this.dialect            = dialect.toLowerCase();
+        this.schema             = schema;
+        this.associations       = associations;
         this.logger             = logger || console;
         this.data_typer_mapper  = this.#getDataTypeMapper(); 
     }
@@ -86,7 +88,7 @@ class QueryUtil {
 
         const { limit, offset, order_by, lock } = options;
 
-        const table_name = this.model_instance?.schema?.table_name;
+        const table_name = this.schema?.table_name;
 
         let clause = '';
 
@@ -161,7 +163,7 @@ class QueryUtil {
     };
 
     #resolveAssociation = (base_table, include) => {
-        const associations          = this.model_instance.getAssociations?.() || [];
+        const associations          = this.associations || [];
         const include_table_name    = include?.model?.schema?.table_name;
 
         const match = associations.find(a => {

@@ -1,15 +1,16 @@
 const QueryUtil         = require("../utils/query_util")
 
 class BaseQueryBuilder {
-    constructor(model_instance, dialect, logger = null) {
+    constructor(dialect, schema = {}, associations = [], logger = null) {
         this.name               = "base_query_builder";
-        this.model_instance     = model_instance;
         this.dialect            = dialect;
         this.logger             = logger || console;
-        this.query_util         = new QueryUtil(this.model_instance, this.dialect, this.logger);
+        this.query_util         = new QueryUtil(dialect, schema, associations, this.logger);
     }
 
-    select = (table_name, fields = [], where = {}, options = {}) => {
+    select = (query_params) => {
+        const { table_name, fields = [], where = {}, options = {} } = query_params;
+
         const distinct                              = options?.distinct ? 'DISTINCT' : '';
         const base_fields                           = this.query_util.formatSelectFields(table_name, fields);
         const { joins, fields: include_fields }     = this.query_util.formatIncludes(table_name, options?.include);
@@ -30,7 +31,9 @@ class BaseQueryBuilder {
         return sql.replace(/\s+/g, ' ').trim();
     }
 
-    selectCount = (table_name, where = {}, options = {}) => {
+    selectCount = (query_params) => {
+        const { table_name, where = {}, options = {} } = query_params;
+
         const distinct                            = options?.distinct ? 'DISTINCT' : '';
         const { joins }                           = this.query_util.formatIncludes(table_name, options?.include);
         const join_clause                         = joins?.join(' ') || '';
@@ -46,7 +49,9 @@ class BaseQueryBuilder {
         return sql.replace(/\s+/g, ' ').trim();
     }
 
-    insert = (table_name, data) => {
+    insert = (query_params) => {
+        const { table_name, data } = query_params;
+
         const columns   = Object.keys(data).map(this.query_util.escapeField).join(', ');
         const values    = Object.values(data).map(this.query_util.escapeValue).join(', ');
 
@@ -60,7 +65,9 @@ class BaseQueryBuilder {
         return sql.replace(/\s+/g, ' ').trim();
     }
 
-    bulkInsert = (table_name, table_columns, data_array) => {
+    bulkInsert = (query_params) => {
+        const { table_name, table_columns, data: data_array } = query_params;
+
         if (!Array.isArray(data_array) || data_array.length === 0) { throw new Error("No values provided for bulk insert"); }
 
         const first_row     = data_array[0];
@@ -81,7 +88,10 @@ class BaseQueryBuilder {
         return sql.replace(/\s+/g, ' ').trim();
     };
 
-    update = (table_name, where, data) => {
+    update = (query_params) => {
+        const { table_name, where, data } = query_params;
+
+
         const set_clause = Object.entries(data).map(
             ([k, v]) => `${this.query_util.escapeQualifiedField(`${table_name}.${k}`)} = ${this.query_util.escapeValue(v)}`
         ).join(', ');
@@ -95,7 +105,10 @@ class BaseQueryBuilder {
         return sql.replace(/\s+/g, ' ').trim();
     }
 
-    increment = (table_name, where, field, amount = 1) => {
+    increment = (query_params) => {
+        const { table_name, where, fields, amount = 1 } = query_params;
+
+        const field             = query_params?.field || Array.isArray(fields) ? fields[0] : fields;
         const escaped_field     = this.query_util.escapeQualifiedField(`${table_name}.${field}`);
         const set_clause        = `${escaped_field} = ${escaped_field} + ${this.query_util.escapeValue(amount)}`;
         const sql               = `
@@ -106,7 +119,10 @@ class BaseQueryBuilder {
         return sql.replace(/\s+/g, ' ').trim();
     }
 
-    decrement = (table_name, where, field, amount = 1) => {
+    decrement = (query_params) => {
+        const { table_name, where, fields, amount = 1 } = query_params;
+
+        const field             = query_params?.field || Array.isArray(fields) ? fields[0] : fields;
         const escaped_field     = this.query_util.escapeQualifiedField(`${table_name}.${field}`);
         const set_clause        = `${escaped_field} = ${escaped_field} - ${this.query_util.escapeValue(amount)}`;
         const sql               = `
@@ -118,7 +134,8 @@ class BaseQueryBuilder {
         return sql.replace(/\s+/g, ' ').trim();
     }
 
-    delete = (table_name, where) => {
+    delete = (query_params) => {
+        const { table_name, where} = query_params;
         const sql = `
             DELETE FROM ${this.query_util.escapeField(table_name)}
             ${this.query_util.formatWhereClause(table_name, where)}

@@ -9,8 +9,8 @@ const queryBuilderMap = {
     mongo_db: MongoQueryBuilder
 };
 
-const getQueryBuilder = (datasource_type, model_instance = null, logger_instance = null) => {
-    const builder = new queryBuilderMap[datasource_type](model_instance, logger_instance);
+const getQueryBuilder = (datasource_type, schema = {}, associations = [], logger_instance = null) => {
+    const builder = new queryBuilderMap[datasource_type](schema, associations, logger_instance);
 
     if (!builder) { throw new Error(`No query builder for ${datasource_type}`); }
     
