@@ -187,7 +187,8 @@ class BaseModel {
             this.model_util.validatePermission(schema, 'create', schema?.model_name);
 
             const associations          = this.getAssociations();
-            const query_params          = { schema, associations, query_method_name: "insert", fields: null, where: null, options, data };
+            const sanitzed_fields       = this.model_util.sanitizeFields(schema, data);
+            const query_params          = { schema, associations, query_method_name: "insert", fields: null, where: null, options, data: sanitzed_fields };
             const { connector, query }  = this.model_util.buildQueryWithConnector(query_params);
 
             this.model_util.triggerHook(schema?.model_name, 'before_create', data, options);
@@ -222,7 +223,9 @@ class BaseModel {
 
             const ignore_duplicates = options.ignore_duplicates !== false;
 
-            if (ignore_duplicates) { full_rows = this.model_util?.getUniqueArray(data); }
+            if (ignore_duplicates) { full_rows = this.model_util?.getUniqueArray(schema, data); }
+
+            else { full_rows = data.map((row) => this.model_util.sanitizeFields(schema, row)); }
 
             const associations          = this.getAssociations();
             const query_params          = { schema, associations, query_method_name: "bulkInsert", fields: null, where: null, options, data: full_rows };
@@ -259,7 +262,8 @@ class BaseModel {
             const associations          = this.getAssociations();
             const pk_field              = schema.primary_key?.toString() || "id";
             const final_where           = where || { [pk_field]: this[pk_field] };
-            const query_params          = { schema, associations, query_method_name: "update", fields: null, where: final_where, options, data };
+            const sanitzed_fields       = this.model_util.sanitizeFields(schema, data);
+            const query_params          = { schema, associations, query_method_name: "update", fields: null, where: final_where, options, data: sanitzed_fields };
             const { connector, query }  = this.model_util.buildQueryWithConnector(query_params);
 
             this.model_util.triggerHook(schema?.model_name, 'before_update', data, options);
@@ -284,6 +288,8 @@ class BaseModel {
 
         if (typeof amount !== 'number') {throw new Error("Expected 'amount' to be a number");}
 
+        if (!this.schema?.columns[field]) {throw new Error(`Expected 'field' to be one of ${Object.keys(this.schema?.columns)}`);}
+
         try {
             const { schema }    = this;
 
@@ -292,7 +298,7 @@ class BaseModel {
             const associations          = this.getAssociations();
             const pk_field              = schema.primary_key?.toString() || "id";
             const final_where           = where || { [pk_field]: this[pk_field] };
-            const query_params          = { schema, associations, query_method_name: "increment", fields: [field], where: final_where, options, data, amount };
+            const query_params          = { schema, associations, query_method_name: "increment", fields: [field], where: final_where, options, data: null, amount };
             const { connector, query }  = this.model_util.buildQueryWithConnector(query_params);
 
             this.model_util.triggerHook(schema?.model_name, 'before_increment', { field, amount, where: final_where }, options);
@@ -315,6 +321,8 @@ class BaseModel {
 
         if (typeof amount !== 'number') {throw new Error("Expected 'amount' to be a number");}
 
+        if (!this.schema?.columns[field]) {throw new Error(`Expected 'field' to be one of ${Object.keys(this.schema?.columns)}`);}
+
         try {
             const { schema }    = this;
 
@@ -323,7 +331,7 @@ class BaseModel {
             const associations          = this.getAssociations();
             const pk_field              = schema.primary_key?.toString() || "id";
             const final_where           = where || { [pk_field]: this[pk_field] };
-            const query_params          = { schema, associations, query_method_name: "decrement", fields: [field], where: final_where, options, data, amount };
+            const query_params          = { schema, associations, query_method_name: "decrement", fields: [field], where: final_where, options, data: null, amount };
             const { connector, query }  = this.model_util.buildQueryWithConnector(query_params);
 
             this.model_util.triggerHook(schema?.model_name, 'before_decrement', { field, amount, where: final_where }, options);
@@ -341,6 +349,7 @@ class BaseModel {
     // Method to delete records based on conditions
     static delete = async (where, options = {}) => {
         if (typeof where !== 'object') {throw new Error("Expected 'where' to be an object");}
+
 
         try {
             const { schema }    = this;
@@ -369,8 +378,18 @@ class BaseModel {
     // === Constructor ===
 
     constructor(data = {}) {
-        Object.assign(this, data);
+        this._raw = data;
+        this.#addMSchemaFieldsToModel(data);
         this.addComputedAttributes(); // No-op unless overridden
+    }
+
+    // Method to add fields 
+    #addMSchemaFieldsToModel = (data) => {
+        const schema_fields = Object.keys(this.constructor.schema?.columns || {});
+
+        for (const key of schema_fields) {
+            this[key] = data[key];
+        }
     }
 
     // Default implementation, override in subclass if needed

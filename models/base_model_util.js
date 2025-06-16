@@ -49,8 +49,15 @@ class BaseModelUtil {
         return true;
     }
 
+    // method to sanitice input data
+    sanitizeFields = (schema, data) => {
+        const allowed_fields = Object.keys(schema?.fields || {});
+
+        return Object.fromEntries(Object.entries(data).filter(([key]) => allowed_fields.includes(key)));
+    }
+
     // Method to get a unique array
-    getUniqueArray = (arr) => {
+    getUniqueArray = (schema, arr) => {
         const seen          = new Set();
         const unique_array   = [];
     
@@ -59,7 +66,8 @@ class BaseModelUtil {
     
             if (!seen.has(key)) {
                 seen.add(key);
-                unique_array.push(item);
+                const sanitzed_fields = this.sanitizeFields(schema, item);
+                unique_array.push(sanitzed_fields);
             }
         }
     
@@ -104,7 +112,7 @@ class BaseModelUtil {
     // Method to get query method param obj
     buildQueryWithConnector = (query_params ) => {
         const { schema, associations, query_method_name, fields, where, options, amount, data = {} } = query_params;
-        
+
         if (!schema) {
             throw new Error("Schema is required");
         }
