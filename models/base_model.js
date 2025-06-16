@@ -378,7 +378,6 @@ class BaseModel {
     // === Constructor ===
 
     constructor(data = {}) {
-        this._raw = data;
         this.#addMSchemaFieldsToModel(data);
         this.addComputedAttributes(); // No-op unless overridden
     }
