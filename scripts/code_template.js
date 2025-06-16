@@ -187,15 +187,16 @@ module.exports = DeltaMigration;
 // model code template
 const modelCodeTemplate = (app_id, model_name, schema_file_name) => {
 
+const class_model_name = schema_file_name.toLowerCase().replace("_schema.js", "")
 return `
-const BaseModel    = require("fiberx-dbms/models/base_model");
-const ${model_name}Schema   = require("../schemas/${app_id}/${schema_file_name}");
+const BaseModel     = require("fiberx-dbms/models/base_model");
+const Schema        = require("../schemas/${app_id}/${schema_file_name}");
     
     
 class ${model_name} extends BaseModel {
     constructor(data) {
-        super({ ...data, schema: ${model_name}Schema  });
-        this.name   = "${model_name.toLowerCase()}_model"
+        super(data);
+        this.name   = "${class_model_name}_model"
     }
 }
     
