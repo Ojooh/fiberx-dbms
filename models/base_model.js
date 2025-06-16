@@ -347,7 +347,7 @@ class BaseModel {
     }
 
     // Method to delete records based on conditions
-    static async delete (where, options = {}) {
+    static async destroy (where, options = {}) {
         if (typeof where !== 'object') {throw new Error("Expected 'where' to be an object");}
 
 
