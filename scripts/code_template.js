@@ -194,6 +194,7 @@ const Schema        = require("../schemas/${app_id}/${schema_file_name}");
     
     
 class ${model_name} extends BaseModel {
+    static schema = Schema;
     constructor(data) {
         super(data);
         this.name   = "${class_model_name}_model"
