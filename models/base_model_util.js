@@ -51,7 +51,7 @@ class BaseModelUtil {
 
     // method to sanitice input data
     sanitizeFields = (schema, data) => {
-        const allowed_fields = Object.keys(schema?.fields || {});
+        const allowed_fields = Object.keys(schema?.columns || {});
 
         return Object.fromEntries(Object.entries(data).filter(([key]) => allowed_fields.includes(key)));
     }
