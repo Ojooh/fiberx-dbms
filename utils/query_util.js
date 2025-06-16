@@ -3,7 +3,6 @@ const mapToMySQLType    = require("../datatypes/mysql");
 
 class QueryUtil {
     constructor(dialect = "mysql", schema = {}, associations = [],   logger = null) {
-        this.model_instance     = model_instance
         this.dialect            = dialect.toLowerCase();
         this.schema             = schema;
         this.associations       = associations;
