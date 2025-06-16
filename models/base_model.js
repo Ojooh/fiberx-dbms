@@ -19,7 +19,7 @@ class BaseModel {
 
     // === Association Methods ===
 
-    static getAssociations = () => { return this.associations || []; };
+    static getAssociations () { return this.associations || []; };
 
     static registerAssociation = (definition) => {
         if (!this.associations) {  this.associations = []; }
@@ -27,26 +27,26 @@ class BaseModel {
         this.associations.push(definition);
     };
 
-    static hasMany = (target, options) => {
+    static hasMany (target, options) {
         return this.registerAssociation({ type: 'hasMany', source: this, model: target, ...options });
     };
 
-    static hasOne = (target, options) => {
+    static hasOne (target, options) {
         return this.registerAssociation({ type: 'hasOne', source: this, model: target, ...options });
     };
 
-    static belongsTo = (target, options) => {
+    static belongsTo (target, options){
         return this.registerAssociation({ type: 'belongsTo', source: this, model: target, ...options });
     };
 
-    static belongsToMany = (target, options) => {
+    static belongsToMany (target, options) {
         return this.registerAssociation({ type: 'belongsToMany', source: this, model: target, ...options });
     };
 
     // === Query Methods ===
 
     // Method to find record based on primary key
-    static findByPk = async (id, fields = [], options = {}) => {
+    static async findByPk (id, fields = [], options = {}) {
         if (!Array.isArray(fields)) {throw new Error("Expected 'fields' to be an array");}
     
 
@@ -72,7 +72,7 @@ class BaseModel {
     }
 
     // Method to find a single record based on fields and conditions
-    static findOne = async (fields, where, options = {}) => {
+    static async findOne (fields, where, options = {}) {
         if (!Array.isArray(fields)) {throw new Error("Expected 'fields' to be an array");}
         
         if (typeof where !== 'object') {throw new Error("Expected 'where' to be an object");}
@@ -97,7 +97,7 @@ class BaseModel {
     }
 
     // Method to find all records based on fields and conditions
-    static findAll = async (fields, where, options = {}) => {
+    static async findAll (fields, where, options = {}) {
         if (!Array.isArray(fields)) {throw new Error("Expected 'fields' to be an array");}
         
         if (typeof where !== 'object') {throw new Error("Expected 'where' to be an object");}
@@ -124,7 +124,7 @@ class BaseModel {
     }
 
     // Method to count records based on conditions
-    static count = async (where, options = {}) => {
+    static async count (where, options = {}) {
         if (typeof where !== 'object') {throw new Error("Expected 'where' to be an object");}
 
         try {
@@ -146,7 +146,7 @@ class BaseModel {
     }
 
     // Method to find and count all records based on fields and conditions
-    static findAndCountAll = async (fields, where, options = {}) => {
+    static async findAndCountAll (fields, where, options = {}) {
         if (!Array.isArray(fields)) {throw new Error("Expected 'fields' to be an array");}
 
         if (typeof where !== 'object') {throw new Error("Expected 'where' to be an object");}
@@ -177,7 +177,7 @@ class BaseModel {
     }
 
     // Method to create a new record
-    static create = async (data, options = {}) => {
+    static async create (data, options = {}) {
         if (typeof data !== 'object') {throw new Error("Expected 'data' to be an object");}
 
         try {
@@ -212,7 +212,7 @@ class BaseModel {
     }
 
     // Method to bulk create records
-    static bulkCreate = async (data, options = {}) => {
+    static async bulkCreate (data, options = {}) {
         if (!Array.isArray(data)) {throw new Error("Expected 'data' to be an array");}
 
         try {
@@ -249,7 +249,7 @@ class BaseModel {
     }
 
     // Method to update records based on conditions
-    static  update = async (data, where, options = {}) => {
+    static  async update (data, where, options = {}) {
         if (typeof data !== 'object') {throw new Error("Expected 'data' to be an object");}
 
         if (typeof where !== 'object') {throw new Error("Expected 'where' to be an object");}
@@ -281,7 +281,7 @@ class BaseModel {
     }
 
     // Method to increment a record field based on conditions
-    static  increment = async (field, where = null, amount = 1, options = {}) => {
+    static  async increment (field, where = null, amount = 1, options = {}) {
         if (!field || typeof field !== 'string') {throw new Error("Expected 'field' to be a string");}
 
         if (typeof where !== 'object') {throw new Error("Expected 'where' to be an object");}
@@ -314,7 +314,7 @@ class BaseModel {
     }
 
     // Method to decrement a record field based on conditions
-    static  decrement = async (field, where = null, amount = 1, options = {}) => {
+    static  async decrement (field, where = null, amount = 1, options = {}) {
         if (!field || typeof field !== 'string') {throw new Error("Expected 'field' to be a string");}
 
         if (typeof where !== 'object') {throw new Error("Expected 'where' to be an object");}
@@ -347,7 +347,7 @@ class BaseModel {
     }
 
     // Method to delete records based on conditions
-    static delete = async (where, options = {}) => {
+    static async delete (where, options = {}) {
         if (typeof where !== 'object') {throw new Error("Expected 'where' to be an object");}
 
 

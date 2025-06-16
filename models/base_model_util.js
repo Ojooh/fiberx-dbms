@@ -117,12 +117,13 @@ class BaseModelUtil {
             throw new Error("Schema is required");
         }
 
+        const datasource_type   = schema?.datasource_type;
+        const qb                = this.getQueryBuilder(datasource_type, schema, associations);
+
         if (typeof qb?.[query_method_name] !== 'function') {
             throw new Error(`Query method '${query_method_name}' not found on query builder`);
         }
-
-        const datasource_type   = schema?.datasource_type;
-        const qb                = this.getQueryBuilder(datasource_type, schema, associations);
+        
         const connector         = this.getConnector(datasource_type);
         const params            = { schema, fields, where, options, data, amount, table_name: schema?.table_name, table_columns: schema?.columns }
         const query             = qb?.[query_method_name](params);
@@ -137,12 +138,13 @@ class BaseModelUtil {
             throw new Error("Schema is required");
         }
 
+        const datasource_type   = schema?.datasource_type;
+        const qb                = this.getQueryBuilder(datasource_type, schema, associations);
+
         if (typeof qb?.[query_method_name] !== 'function') {
             throw new Error(`Query method '${query_method_name}' not found on query builder`);
         }
-
-        const datasource_type   = schema?.datasource_type;
-        const qb                = this.getQueryBuilder(datasource_type, schema, associations);
+        
         const connector         = this.getConnector(datasource_type);
         const params            = { schema, fields, where, options, data, table_name: schema?.table_name, table_columns: schema?.columns }
         const count_query       = qb.selectCount(params);
@@ -150,9 +152,6 @@ class BaseModelUtil {
 
         return { connector, count_query, data_query }
     }
-
-
-   
 
 }
 
