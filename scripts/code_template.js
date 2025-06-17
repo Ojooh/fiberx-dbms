@@ -199,7 +199,6 @@ class ${model_name} extends BaseModel {
     constructor(data) {
         super(data);
         this.#raw = data;
-        this.model_class_name   = "${class_model_name}_model"
     }
 }
     
