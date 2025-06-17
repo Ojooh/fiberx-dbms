@@ -37,6 +37,10 @@ class BaseQueryBuilder {
         const distinct                            = options?.distinct ? 'DISTINCT' : '';
         const { joins }                           = this.query_util.formatIncludes(table_name, options?.include);
         const join_clause                         = joins?.join(' ') || '';
+        
+        // remove limit and offset
+        options.limit = null;
+        options.offset = null;
 
         const sql = `
             SELECT ${distinct} COUNT(*) as count
