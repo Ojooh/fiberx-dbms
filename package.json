@@ -1,6 +1,6 @@
 {
   "name": "fiberx-dbms",
-  "version": "0.1.48",
+  "version": "0.1.49",
   "description": "database schema management system designed for distributed applications. It allows centralized schema creation, versioned migration handling, and Git-based syncing across multiple services using a plug-and-play architecture for MySQL, Postgres, and MongoDB.",
   "main": "app.js",
   "scripts": {
