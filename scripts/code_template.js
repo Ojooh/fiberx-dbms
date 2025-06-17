@@ -126,8 +126,8 @@ class ${model_name}DeltaMigration {
 
             await this.connector.executeQuery(alter_sql);
 
-            for (const trigger_sql of trigger_sql) {
-                await this.connector.executeQuery(trigger_sqls);
+            for (const trigger_sql of trigger_sqls) {
+                await this.connector.executeQuery(trigger_sql);
             }
         }
     }
@@ -180,7 +180,7 @@ class ${model_name}DeltaMigration {
     }
 }
 
-module.exports = DeltaMigration;
+module.exports = ${model_name}DeltaMigration;
 `;
 };
 
