@@ -55,7 +55,7 @@ class MongoDBQueryBuilder {
     }
 
     // Method to format options
-    #formatOptions = (options = {}) => {
+    #formatOptions = (table_name, options = {}) => {
         const mongoOpts = {};
 
         if (options.limit) {mongoOpts.limit = options.limit;}
@@ -73,7 +73,7 @@ class MongoDBQueryBuilder {
     select = (collection, fields = [], where = {}, options = {}) => {
         const filter        = this.#parseCondition(where);
         const projection    = this.#formatProjection(fields);
-        const other_options = this.#formatOptions(options);
+        const other_options = this.#formatOptions("", options);
 
         const query = { collection, filter, projection, ...other_options };
 

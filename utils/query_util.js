@@ -82,12 +82,10 @@ class QueryUtil {
         return `WHERE ${condition_str}`;
     }
 
-    formatOptions = (options = null) => {
-        if (!options) return "";
+    formatOptions = (table_name, options = null) => {
+        if (!options) { return ""; }
 
         const { limit, offset, order_by, lock } = options;
-
-        const table_name = this.schema?.table_name;
 
         let clause = '';
 
