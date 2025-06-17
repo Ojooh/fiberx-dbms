@@ -199,6 +199,19 @@ class ${model_name} extends BaseModel {
     constructor(data) {
         super(data);
         this.#raw = data;
+
+        this.addComputedAttributes();
+    }
+
+    // Method to get app computed attributes object
+    getComputedAttributes = () => { return {} }
+
+    // Method to add computed attributes to the model
+    addComputedAttributes = () => {
+        const computed_attributes = this.getComputedAttributes();
+        for (const [key, value] of Object.entries(computed_attributes)) {
+            this[key] = value;
+        }
     }
 }
     

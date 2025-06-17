@@ -379,7 +379,6 @@ class BaseModel {
 
     constructor(data = {}) {
         Object.assign(this, data); // Assign data to instance properties
-        this.addComputedAttributes(); // No-op unless overridden
     }
 
     // Method to add fields 
@@ -390,9 +389,6 @@ class BaseModel {
             this[key] = data[key];
         }
     }
-
-    // Default implementation, override in subclass if needed
-    addComputedAttributes () { }
 }
 
 module.exports = BaseModel;
