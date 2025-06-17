@@ -34,20 +34,18 @@ class BaseQueryBuilder {
     selectCount = (query_params) => {
         const { table_name, where = {}, options = {} } = query_params;
 
-        const distinct                            = options?.distinct ? 'DISTINCT' : '';
-        const { joins }                           = this.query_util.formatIncludes(table_name, options?.include);
-        const join_clause                         = joins?.join(' ') || '';
-        
-        // remove limit and offset
-        options.limit = null;
-        options.offset = null;
+        const distinct          = options?.distinct ? 'DISTINCT' : '';
+        const { joins }         = this.query_util.formatIncludes(table_name, options?.include);
+        const join_clause       = joins?.join(' ') || '';
+        const count_options     = { ...options, limit: null, offset: null }   
+    
 
         const sql = `
             SELECT ${distinct} COUNT(*) as count
             FROM ${this.query_util.escapeField(table_name)}
             ${join_clause}
             ${this.query_util.formatWhereClause(table_name, where)}
-            ${this.query_util.formatOptions(table_name, options)}
+            ${this.query_util.formatOptions(table_name, count_options)}
         `;
 
         return sql.replace(/\s+/g, ' ').trim();
