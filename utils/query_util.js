@@ -244,24 +244,34 @@ class QueryUtil {
             throw new Error(`Nested includes are not supported in subqueries (hasMany/belongsToMany) for alias "${include.as || association?.model?.schema?.table_name}".`);
         }
 
-        const { model: target_model, foreign_key }  = association;
-        const target_table                          = target_model?.schema?.table_name;
-        const plain_alias                           = include.as || target_table;
-        const alias                                 = `${plain_alias}_sub`;
-        const all_fields                            = Object.keys(target_model?.schema?.columns);
-        const resolved_fields                       = include?.fields?.length && include?.fields?.includes('*') ? all_fields : include?.fields || all_fields;
-        const field_mappings                        = this.formatSelectFields(alias, resolved_fields);
-        let where_clause                            = `${this.escapeQualifiedField(`${alias}.${foreign_key}`)} = ${this.escapeQualifiedField(`${base_table}.id`)}`;
+        const { model: target_model, foreign_key } = association;
+
+        const target_table              = target_model?.schema?.table_name;
+        const plain_alias               = include.as || target_table;
+        const alias                     = `${plain_alias}_sub`;
+        const all_fields                = Object.keys(target_model?.schema?.columns);
+        const resolved_fields           = include?.fields?.includes('*') ? all_fields : include?.fields || all_fields;
+        // Generate key-value pair string depending on dialect
+        const key_value_pairs           = resolved_fields.map(field => {
+            const field_expr = this.escapeQualifiedField(`${alias}.${field}`);
+            return this.dialect === "postgres" ? `'${field}', ${field_expr}` : `'${field}', ${field_expr}`;
+        }).join(', ');
+
+        const jsonFn                    = this.dialect === "postgres" ? "json_build_object" : "JSON_OBJECT";
+        const jsonAggFn                 = this.dialect === "postgres" ? "json_agg" : "JSON_ARRAYAGG";
+        let where_clause                = `${this.escapeQualifiedField(`${alias}.${foreign_key}`)} = ${this.escapeQualifiedField(`${base_table}.id`)}`;
 
         if (include?.where) {
-            const where_condition   = this.#parseWhereCondition(alias, include.where).replace(/^AND\s+/, '');
-            where_clause            += ` AND (${where_condition})`;
+            const where_condition = this.#parseWhereCondition(alias, include.where).replace(/^AND\s+/, '');
+            where_clause += ` AND (${where_condition})`;
         }
+
         const sub_query = `(
-            SELECT JSON_ARRAYAGG(JSON_OBJECT(${field_mappings}))
+            SELECT ${jsonAggFn}(${jsonFn}(${key_value_pairs}))
             FROM ${this.#quoteIdentifier(target_table)} AS ${this.#quoteIdentifier(alias)}
             WHERE ${where_clause}
         ) AS ${this.#quoteIdentifier(plain_alias)}`;
+
         return sub_query;
     }
 
