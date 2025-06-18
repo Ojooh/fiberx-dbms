@@ -114,6 +114,7 @@ class BaseModelUtil {
         const { table_name, columns }   = schema;
         const serialized_result         = {};
         const columns_fields            = Object.keys(columns || {});
+        console.log({ row })
 
         for (const field of columns_fields) {
             const full_key              = `${alias || table_name}.${field}`;
@@ -129,16 +130,16 @@ class BaseModelUtil {
 
             if(row[alias] && Array.isArray(row[alias])) {
                 serialized_result[alias] = row[alias].map(item => { 
-                    _result = this.serializeRowResult(item, included_model?.schema, include.include || [], alias);
+                    _result = this.serializeRowResult(included_model?.schema, item,  include.include || [], alias);
                     return new included_model(_result);
                 });
             }
             else if(row[alias]) {
-                _result                     = this.serializeRowResult(row[alias], included_model?.schema, include.include || [], alias);
+                _result                     = this.serializeRowResult(included_model?.schema, row[alias], include.include || [], alias);
                 serialized_result[alias]    = new included_model(_result);
             }
             else {
-                _result                     = this.serializeRowResult(row, included_model?.schema, include.include || [], alias);
+                _result                     = this.serializeRowResult(included_model?.schema, row,  include.include || [], alias);
                 serialized_result[alias]    = new included_model(_result);
             }
 
