@@ -114,7 +114,6 @@ class BaseModelUtil {
         const { table_name, columns }   = schema;
         const serialized_result         = {};
         const columns_fields            = Object.keys(columns || {});
-        console.log({ row })
 
         for (const field of columns_fields) {
             const full_key              = `${alias || table_name}.${field}`;
