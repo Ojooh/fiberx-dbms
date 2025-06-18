@@ -233,7 +233,7 @@ class BaseModel {
 
             this.model_util.triggerHook(schema?.model_name, 'before_bulk_create', data, options);
 
-            const result        = await connector.executeQuery(query);
+            const result        = await connector.executeQuery(query, options);
             const new_instances  = full_rows.map((row) => { 
                 const normalized_row = this.model_util.serializeRowResult(schema, row, options?.include);
                 return new this(normalized_row);
