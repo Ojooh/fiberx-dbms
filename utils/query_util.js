@@ -244,7 +244,7 @@ class QueryUtil {
             throw new Error(`Nested includes are not supported in subqueries (hasMany/belongsToMany) for alias "${include.as || association?.model?.schema?.table_name}".`);
         }
 
-        const { model: target_model, foreign_key } = association;
+        const { model: target_model, foreign_key, target_key } = association;
 
         const target_table              = target_model?.schema?.table_name;
         const plain_alias               = include.as || target_table;
@@ -259,7 +259,7 @@ class QueryUtil {
 
         const jsonFn                    = this.dialect === "postgres" ? "json_build_object" : "JSON_OBJECT";
         const jsonAggFn                 = this.dialect === "postgres" ? "json_agg" : "JSON_ARRAYAGG";
-        let where_clause                = `${this.escapeQualifiedField(`${alias}.${foreign_key}`)} = ${this.escapeQualifiedField(`${base_table}.id`)}`;
+        let where_clause                = `${this.escapeQualifiedField(`${alias}.${target_key}`)} = ${this.escapeQualifiedField(`${base_table}.${foreign_key}`)}`;
 
         if (include?.where) {
             const where_condition = this.#parseWhereCondition(alias, include.where).replace(/^AND\s+/, '');

@@ -109,6 +109,45 @@ class BaseModelUtil {
         return result;
     }
 
+    // Method to serialize a row result
+    serializeRowResult = (schema, row, includes = [], alias = null) => {
+        const { table_name, columns }   = schema;
+        const serialized_result         = {};
+        const columns_fields            = Object.keys(columns || {});
+
+        for (const field of columns_fields) {
+            const full_key              = `${alias || table_name}.${field}`;
+            const value                 = row[field] || row[full_key] ||  null;
+
+            if(value) { serialized_result[field] = value; }
+        }
+
+        for (const include of includes) {
+            const alias             = include.as || include.model?.schema?.table_name;
+            const included_model    = include.model;
+            let _result             = {};
+
+            if(row[alias] && Array.isArray(row[alias])) {
+                serialized_result[alias] = row[alias].map(item => { 
+                    _result = this.serializeRowResult(item, included_model?.schema, include.include || [], alias);
+                    return new included_model(_result);
+                });
+            }
+            else if(row[alias]) {
+                _result                     = this.serializeRowResult(row[alias], included_model?.schema, include.include || [], alias);
+                serialized_result[alias]    = new included_model(_result);
+            }
+            else {
+                _result                     = this.serializeRowResult(row, included_model?.schema, include.include || [], alias);
+                serialized_result[alias]    = new included_model(_result);
+            }
+
+        }
+
+        return serialized_result
+
+    }
+
     // Method to get query method param obj
     buildQueryWithConnector = (query_params ) => {
         const { schema, associations, query_method_name, fields, where, options, amount, data = {} } = query_params;

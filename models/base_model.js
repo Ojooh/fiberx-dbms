@@ -62,7 +62,7 @@ class BaseModel {
             const { connector, query }  = this.model_util.buildQueryWithConnector(query_params);
             const result                = await connector.executeQuery(query, options);
             const row                   = result?.[0] || null;
-            const normalized            = row ? this.model_util.denormalizeJoinedResult(schema, row, options?.include) : null;
+            const normalized            = row ? this.model_util.serializeRowResult(schema, row, options?.include) : null;
 
             return normalized ? new this(normalized) : null;
         } catch (err) {
@@ -87,7 +87,7 @@ class BaseModel {
             const { connector, query }  = this.model_util.buildQueryWithConnector(query_params);
             const result                = await connector.executeQuery(query, options);
             const row                   = result?.[0] || null;
-            const normalized            = row ? this.model_util.denormalizeJoinedResult(schema, row, options?.include) : null;
+            const normalized            = row ? this.model_util.serializeRowResult(schema, row, options?.include) : null;
             
             return normalized ? new this(normalized) : null;
         } catch (err) {
@@ -113,7 +113,7 @@ class BaseModel {
             const result                = await connector.executeQuery(query, options);
             
             return result.map((row) => { 
-                const normalized_row    = row ? this.model_util.denormalizeJoinedResult(schema, row, options?.include)  : null
+                const normalized_row    = row ? this.model_util.serializeRowResult(schema, row, options?.include)  : null
                 return normalized_row ? new this(normalized_row) : null;
             });
         }
@@ -165,7 +165,7 @@ class BaseModel {
             ]);
 
             const normalized_rows = rows_result.map((row) => { 
-                const normalized_row    = row ? this.model_util.denormalizeJoinedResult(schema, row, options?.include)  : null
+                const normalized_row    = row ? this.model_util.serializeRowResult(schema, row, options?.include)  : null
                 return normalized_row ? new this(normalized_row) : null;
             });
 
@@ -200,7 +200,7 @@ class BaseModel {
             const fetch_query       = `SELECT * FROM ${schema?.table_name} WHERE id = ? LIMIT 1`;
             const [row]             = await connector.executeQuery(fetch_query, { params: [insert_id] });
             full_row                = row || data; 
-            const normalized_row    = this.model_util.denormalizeJoinedResult(schema, full_row, options?.include)
+            const normalized_row    = this.model_util.serializeRowResult(schema, full_row, options?.include)
             const new_instance      = normalized_row ? new this(normalized_row) : null;
 
             this.model_util.triggerHook(schema?.model_name, 'after_create', new_instance, options);
@@ -235,7 +235,7 @@ class BaseModel {
 
             const result        = await connector.executeQuery(query);
             const new_instances  = full_rows.map((row) => { 
-                const normalized_row = this.model_util.denormalizeJoinedResult(schema, row, options?.include);
+                const normalized_row = this.model_util.serializeRowResult(schema, row, options?.include);
                 return new this(normalized_row);
             });
 
