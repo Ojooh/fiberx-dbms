@@ -198,7 +198,7 @@ class BaseModel {
             if(!insert_id) { return null }
 
             const fetch_query       = `SELECT * FROM ${schema?.table_name} WHERE id = ? LIMIT 1`;
-            const [row]             = await connector.executeQuery(fetch_query, { params: [insert_id] });
+            const [row]             = await connector.executeQuery(fetch_query, {...options, params: [insert_id] });
             full_row                = row || data; 
             const normalized_row    = this.model_util.serializeRowResult(schema, full_row, options?.include)
             const new_instance      = normalized_row ? new this(normalized_row) : null;
