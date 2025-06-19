@@ -109,6 +109,15 @@ class BaseModelUtil {
         return result;
     }
 
+    // Method to get row value based on keys
+    getFieldValue = (row, field, full_key) => {
+        if (Object.prototype.hasOwnProperty.call(row, field)) { return { present: true, value: row[field]}; }
+
+        if (Object.prototype.hasOwnProperty.call(row, full_key)) { return { present: true, value: row[full_key] }; }
+
+        return { present: false, value: null};
+    };
+
     // Method to serialize a row result
     serializeRowResult = (schema, row, includes = [], alias = null) => {
         const { table_name, columns }   = schema;
@@ -117,9 +126,9 @@ class BaseModelUtil {
 
         for (const field of columns_fields) {
             const full_key              = `${alias || table_name}.${field}`;
-            const value                 = row[field] || row[full_key] ||  null;
+            const { present, value }    = this.getFieldValue(row, field, full_key);
 
-            if(value) { serialized_result[field] = value; }
+            if(present) { serialized_result[field] = value; }
         }
 
         for (const include of includes) {
